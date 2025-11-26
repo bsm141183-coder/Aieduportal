@@ -46,6 +46,7 @@
       gap: 16px;
     }
     .nav-left { display: flex; align-items: center; gap: 10px; }
+
     .logo-circle {
       width: 32px; height: 32px;
       border-radius: 8px;
@@ -54,6 +55,9 @@
       font-weight: 700; font-size: 16px; color: #ffffff;
       overflow: hidden;
     }
+    /* ЛОГОТИП ПОРТАЛА:
+       Чтобы заменить логотип, просто поменяйте путь в src на свой файл PNG/JPG/SVG.
+       Пример: <img src="assets/my-logo.png" ...> */
     .nav-title { font-weight: 650; font-size: 18px; }
     .nav-sub   { font-size: 12px; color: var(--muted); }
 
@@ -385,6 +389,10 @@
       color: var(--muted);
       background: #f9fafb;
     }
+    /* КНОПКИ / БЕЙДЖИ БЕЗ ССЫЛКИ:
+       Чтобы сделать их активными, замените <span class="badge-small">Текст</span>
+       на <a href="https://ваш-сайт.kz" target="_blank" class="badge-small">Текст</a>.
+       Примеры этих бейджей ниже в блоках Материалы и Мини-курсы. */
 
     .roadmap-steps { display: grid; gap: 6px; font-size: 12px; }
     .roadmap-item {
@@ -497,6 +505,7 @@
     <div class="nav">
       <div class="nav-left">
         <div class="logo-circle">
+          <!-- ЛОГОТИП ПОРТАЛА: здесь меняем картинку портала -->
           <img src="assets/logo.png" alt="AI EDU PORTAL"
                style="width: 100%; height: 100%; border-radius: 8px;">
         </div>
@@ -521,6 +530,7 @@
       </nav>
     </div>
   </header>
+
   <main>
     <!-- HERO -->
     <section class="hero">
@@ -651,6 +661,7 @@
                   <option value="subject" data-i18n="categorySubject">Предметные</option>
                 </select>
               </div>
+              <!-- roleFilter скрыт, но используется в JS для фильтрации -->
               <select id="roleFilter" style="display:none;">
                 <option value="all">all</option>
                 <option value="student">student</option>
@@ -711,6 +722,8 @@
                 Готовые идеи задач и мини-проектов: ЛВС, базы данных, программирование, цифровая гигиена.
               </div>
               <div class="badge-row">
+                <!-- ПРИМЕР НЕАКТИВНЫХ БЕЙДЖЕЙ:
+                     Чтобы сделать кликабельными, замените span на <a href="..."> -->
                 <span class="badge-small" data-i18n="material1Tag1">Практика</span>
                 <span class="badge-small" data-i18n="material1Tag2">Студентам</span>
               </div>
@@ -749,6 +762,7 @@
                 Что такое нейросеть, чем может помочь студенту и преподавателю.
               </div>
               <div class="badge-row">
+                <!-- АКТИВНАЯ КНОПКА-ПЕРЕХОД на Stepik -->
                 <a href="https://stepik.org/course/263415/promo"
                    target="_blank"
                    rel="noopener noreferrer"
@@ -763,6 +777,7 @@
                 Простые правила и примеры промтов, чтобы ответы были полезными.
               </div>
               <div class="badge-row">
+                <!-- ЗДЕСЬ МОЖНО ПРИКРЕПИТЬ ССЫЛКУ НА МАТЕРИАЛ КУРСА -->
                 <span class="badge-small" data-i18n="course2Tag1">Промты</span>
                 <span class="badge-small" data-i18n="course2Tag2">Студенты + преподаватели</span>
               </div>
@@ -866,13 +881,26 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  /* МАССИВ ИНСТРУМЕНТОВ
+     Чтобы добавить новый инструмент:
+     1) Скопируйте любой объект {...} внутри массива tools.
+     2) Измените:
+        - name: название инструмента
+        - logoType + logoSrc или logoText: логотип
+        - youtube: ссылка формата https://www.youtube.com/embed/ID
+        - link: ссылка на официальный сайт
+  */
   const tools = [
     {
       id: 'chatgpt',
       name: 'ChatGPT / GPT-модели',
       short: 'Текстовый ассистент для любых предметов.',
       logoType: 'image',
+      // ЛОГОТИП ИНСТРУМЕНТА ChatGPT:
+      // поменяйте путь на свой файл (PNG/SVG/JPG), например 'assets/my-gpt-logo.png'
       logoSrc: 'assets/ChatGPT_logo.svg.png',
+      // YOUTUBE-ОБЗОР ДЛЯ CHATGPT:
+      // сюда вставляем embed-ссылку вида https://www.youtube.com/embed/ID
       youtube: 'https://www.youtube.com/embed/kIhb5pEo_j0',
       roles: ['teacher','student'],
       category: 'text',
@@ -888,7 +916,11 @@ document.addEventListener('DOMContentLoaded', () => {
       name: 'Gemini / Аналоги от Google',
       short: 'Генерация текста, картинок и анализ файлов.',
       logoType: 'image',
+      // ЛОГОТИП ИНСТРУМЕНТА GEMINI:
+      // файл лежит в assets/gemini-color.png, можно заменить на другой
       logoSrc: 'assets/gemini-color.png',
+      // YOUTUBE ДЛЯ GEMINI:
+      // замените на нужный embed-URL
       youtube: 'https://www.youtube.com/embed/_fuimO6ErKI',
       roles: ['teacher','student'],
       category: 'text',
@@ -904,6 +936,9 @@ document.addEventListener('DOMContentLoaded', () => {
       name: 'Canva с ИИ-ассистентом',
       short: 'Создание слайдов, постеров и инфографики.',
       logoType: 'text',
+      // Если хотите картинку-логотип для Canva:
+      // 1) замените logoType: 'image'
+      // 2) добавьте logoSrc: 'assets/canva.png'
       logoText: 'CC',
       roles: ['teacher','student'],
       category: 'presentation',
@@ -912,6 +947,8 @@ document.addEventListener('DOMContentLoaded', () => {
       minus: 'Нужно следить за авторскими правами на изображения.',
       tags: ['Презентации','Дизайн','Студенческие проекты'],
       price: 'Бесплатно + Pro',
+      // Можно добавить собственное видео-объяснение:
+      // youtube: 'https://www.youtube.com/embed/ВАШ_ID',
       link: 'https://www.canva.com'
     },
     {
@@ -927,6 +964,8 @@ document.addEventListener('DOMContentLoaded', () => {
       minus: 'Слайды требуют доработки под группу.',
       tags: ['Презентации','Автоматизация'],
       price: 'Freemium',
+      // Пример: добавьте сюда видео-обзор:
+      // youtube: 'https://www.youtube.com/embed/ID',
       link: 'https://www.slidesai.io'
     },
     {
@@ -942,6 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
       minus: 'Нужно внимательно относиться к авторскому праву и этике.',
       tags: ['Изображения','Дизайн','Визуализация'],
       price: 'Freemium / платно',
+      // youtube: 'https://www.youtube.com/embed/ID',
       link: 'https://www.midjourney.com'
     },
     {
@@ -957,6 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
       minus: 'Нужна хорошая запись, возможны неточности распознавания.',
       tags: ['Аудио','Транскрипция'],
       price: 'Обычно бесплатно или freemium',
+      // youtube: 'https://www.youtube.com/embed/ID',
       link: 'https://openai.com/index/whisper'
     }
   ];
@@ -1013,6 +1054,8 @@ document.addEventListener('DOMContentLoaded', () => {
         img.alt = tool.name;
         logo.appendChild(img);
 
+        // КЛИК ПО ЛОГОТИПУ:
+        // если у инструмента есть поле youtube, откроется модальное окно с видео.
         if (tool.youtube) {
           logo.style.cursor = 'pointer';
           logo.title = 'Видео-обзор: ' + tool.name;
@@ -1120,6 +1163,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  /* БЛОК ПЕРЕВОДОВ: RU / KZ / EN
+     Все тексты, у которых есть атрибут data-i18n, берут значения отсюда.
+     Чтобы поправить перевод, найдите ключ (например footerText) и измените текст в нужном языке.
+  */
   const translations = {
     ru: {
       navTitle: 'AI EDU PORTAL',
@@ -1404,33 +1451,33 @@ document.addEventListener('DOMContentLoaded', () => {
       subjectsIntro: 'Below are general examples. In real work you will open the catalog, choose a tool and use it in a similar way.',
       subjectsItem1: '<strong>Networking, LAN:</strong> explaining VLAN, IP planning, generating tasks on configuring networks.',
       subjectsItem2: '<strong>Databases:</strong> generating example tables, SQL tasks, analysing student errors.',
-      subjectsItem3: '<strong>Programming:</strong> code hints, explaining algorithms, problem-solving trainer.',
+      subjectsItem3: '<strong>Programming:</strong> code hints, explaining algorithms, task drills.',
       subjectsItem4: '<strong>Languages (EN/KZ/RU):</strong> practising grammar, rewriting texts, vocabulary work.',
-      subjectsItem5: '<strong>Design and multimedia:</strong> creating illustrations, presentations, project posters.',
-      navigatorCaption: 'AI navigator',
+      subjectsItem5: '<strong>Design & multimedia:</strong> creating illustrations, presentations, project posters.',
+      navigatorCaption: 'AI Navigator',
       navigatorTitle: 'Selecting tools for your task',
       navigatorText: 'Describe your task in simple words — the AI navigator will suggest which AI services to start with and which portal materials to use.',
       materialsCaption: 'Materials',
       materialsTitle: 'What you can use right away',
-      material1Title: 'Set of practical assignments',
-      material1Text: 'Ready ideas for tasks and mini-projects: LAN, databases, programming, digital hygiene.',
+      material1Title: 'Set of practical tasks',
+      material1Text: 'Ready ideas for tasks and mini-projects: LANs, databases, programming, digital hygiene.',
       material1Tag1: 'Practice',
       material1Tag2: 'For students',
       material2Title: 'Teacher’s toolkit',
-      material2Text: 'Task templates, prompt wording examples, checklists for lessons with AI.',
+      material2Text: 'Task templates, sample prompts and checklists for lessons with AI.',
       material2Tag1: 'Methodology',
       material2Tag2: 'For teachers',
-      material3Title: 'Test and essay generator',
-      material3Text: 'Step-by-step guide for quickly creating a draft test or lesson outline with AI.',
+      material3Title: 'Test & essay generator',
+      material3Text: 'Step-by-step guide on how to use AI to quickly create a draft test or outline.',
       material3Tag1: 'Tests',
       material3Tag2: 'Essays',
       coursesCaption: 'Mini-courses',
-      coursesTitle: 'Short courses about AI',
+      coursesTitle: 'Short AI courses',
       course1Title: 'Introduction to AI',
       course1Text: 'What a neural network is and how it can help students and teachers.',
       course1Tag1: 'Intro course',
-      course2Title: 'How to ask AI questions',
-      course2Text: 'Simple rules and examples of prompts to get useful answers.',
+      course2Title: 'How to ask questions to AI',
+      course2Text: 'Simple rules and prompt examples to make answers more useful.',
       course2Tag1: 'Prompts',
       course2Tag2: 'Students + teachers',
       course3Title: 'AI in teacher’s work',
