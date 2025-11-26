@@ -773,7 +773,9 @@
                         <div class="tools-filters">
                             <div class="field-group" style="flex:1 1 180px;">
                                 <div class="field-label" data-i18n="toolsSearchLabel">Поиск по задаче или ключевому слову</div>
-                                <input id="searchInput" class="input" placeholder="Например: «презентация по ЛВС», «SQL», «цифровая гигиена»" data-i18n-placeholder="toolsSearchPlaceholder">
+                                <input id="searchInput" class="input"
+                                       placeholder="Например: «презентация по ЛВС», «SQL», «цифровая гигиена»"
+                                       data-i18n-placeholder="toolsSearchPlaceholder">
                             </div>
                             <div class="field-group">
                                 <div class="field-label" data-i18n="toolsCategoryLabel">Тип инструмента</div>
@@ -997,10 +999,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --------------------------------------------------------------------
     // 1. ДАННЫЕ ПО ИНСТРУМЕНТАМ
-    //    Для добавления видео и логотипа достаточно править:
-    //    - logoType: 'image'
-    //    - logoSrc: 'assets/...' (путь к PNG/SVG)
-    //    - youtube: 'https://www.youtube.com/embed/...'
     // --------------------------------------------------------------------
     const tools = [
         {
@@ -1031,8 +1029,6 @@ document.addEventListener('DOMContentLoaded', () => {
             logoText: 'G/',
             logoSrc: 'assets/gemini-color.png',
             // ВИДЕО ДЛЯ GEMINI (формат embed)
-            // Исходная ссылка: https://youtu.be/_fuimO6ErKI?si=...
-            // Преобразована в embed-формат:
             youtube: 'https://www.youtube.com/embed/_fuimO6ErKI',
             roles: ['teacher', 'student'],
             category: 'text',
@@ -1299,7 +1295,397 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --------------------------------------------------------------------
-    // 7. Переключатель языков (задаём только визуальное состояние)
+    // 7. СЛОВАРЬ ПЕРЕВОДОВ (RU / KK / EN)
+    // --------------------------------------------------------------------
+    const translations = {
+        ru: {
+            navTitle: 'AI EDU PORTAL',
+            navSubtitle: 'Портал ИИ для преподавателей и студентов',
+            navCatalog: 'Каталог',
+            navNavigator: 'AI-Навигатор',
+            navMaterials: 'Материалы',
+            navCourses: 'Мини-курсы',
+            navSafety: 'Безопасность',
+
+            heroBadge: '<span>MVP</span>Рабочая версия портала для ежедневного использования',
+            heroTitle: 'Один портал для работы с ИИ<br> на занятиях и дома',
+            heroText: 'Здесь собраны проверенные ИИ-инструменты для образования, простые инструкции, примеры заданий и AI-навигатор. Цель — не заменить преподавателя, а помочь экономить время и лучше объяснять материал.',
+            heroBtnCatalog: 'Перейти к каталогу инструментов',
+            heroBtnNavigator: 'Задать задачу AI-навигатору',
+            heroInfoForWhomTitle: 'Для кого',
+            heroInfoForWhomText: '• Преподаватели (подготовка к занятиям)<br>• Студенты (самоподготовка)<br>• Методисты (методматериалы)',
+            heroInfoPortalTitle: 'Что даёт портал',
+            heroInfoPortalText: '• Подбор ИИ-сервисов под задачу<br>• Готовые промты и задания<br>• Материалы по безопасному использованию ИИ',
+            heroSummaryTitle: 'Краткая сводка',
+            heroStatToolsLabel: 'Инструментов в каталоге',
+            heroStatAssignmentsLabel: 'заданий и идей (планируемо)',
+            heroStatRoadmapLabel: 'месяцев roadmap развития',
+            heroSummaryFooter: 'Начните с простого: выберите роль (преподаватель или студент), отфильтруйте инструменты и попробуйте один-два сервиса для реальной учебной задачи.',
+
+            problemCaption: 'Почему это важно',
+            problemTitle: 'Основные трудности в работе с ИИ',
+            problemItem1: 'Сложно понять, какие ИИ-сервисы безопасно использовать со студентами.',
+            problemItem2: 'Много разных сайтов, но нет простого объяснения «что для чего».',
+            problemItem3: 'У преподавателей мало времени, чтобы изучать все инструменты по отдельности.',
+            problemItem4: 'Студенты часто используют ИИ «как шпаргалку», а не как помощника в обучении.',
+            solutionTitle: 'Что предлагает портал',
+            solutionItem1: 'Аккуратно отобранные ИИ-инструменты для учебных задач.',
+            solutionItem2: 'Краткие инструкции «шаг 1–2–3» вместо длинных мануалов.',
+            solutionItem3: 'Готовые идеи заданий и промтов под дисциплины.',
+            solutionItem4: 'Раздел по цифровой гигиене и безопасному использованию ИИ.',
+
+            toolsCaption: 'Каталог инструментов',
+            toolsTitle: 'Подбор ИИ-сервисов под учебные задачи',
+            toolsRoleLabel: 'Роль пользователя',
+            roleAll: 'Все',
+            roleTeacher: 'Препод.',
+            roleStudent: 'Студент',
+            toolsSearchLabel: 'Поиск по задаче или ключевому слову',
+            toolsSearchPlaceholder: 'Например: «презентация по ЛВС», «SQL», «цифровая гигиена»',
+            toolsCategoryLabel: 'Тип инструмента',
+            categoryAll: 'Все',
+            categoryText: 'Текст',
+            categoryImage: 'Изображения',
+            categoryVideo: 'Видео',
+            categoryAudio: 'Аудио',
+            categoryPresentation: 'Презентации',
+            categoryAgent: 'ИИ-агенты',
+            categorySubject: 'Предметные',
+
+            subjectsCaption: 'Под дисциплины',
+            subjectsTitle: 'Примеры, как использовать ИИ по предметам',
+            subjectsIntro: 'Ниже — общие примеры. В реальной работе вы будете заходить в каталог, выбирать инструмент и использовать его по аналогии.',
+            subjectsItem1: '<strong>Сетевые технологии, ЛВС:</strong> объяснение VLAN, IP-план, генерация задач по настройке сети.',
+            subjectsItem2: '<strong>Базы данных:</strong> генерация примеров таблиц, задач по SQL, разбор ошибок студентов.',
+            subjectsItem3: '<strong>Программирование:</strong> подсказки по коду, объяснение алгоритмов, тренажёр задач.',
+            subjectsItem4: '<strong>Языки (EN/KZ/RU):</strong> тренировка грамматики, переписывание текстов, словарная работа.',
+            subjectsItem5: '<strong>Дизайн и мультимедиа:</strong> создание иллюстраций, презентаций, постеров проектов.',
+
+            navigatorCaption: 'AI-навигатор',
+            navigatorTitle: 'Подбор инструментов по вашей задаче',
+            navigatorText: 'Опишите вашу задачу простыми словами — AI-навигатор подскажет, с каких ИИ-сервисов начать и какие материалы портала использовать.',
+
+            materialsCaption: 'Материалы',
+            materialsTitle: 'Что можно сразу брать в работу',
+            material1Title: 'Набор практических заданий',
+            material1Text: 'Готовые идеи задач и мини-проектов: ЛВС, базы данных, программирование, цифровая гигиена.',
+            material1Tag1: 'Практика',
+            material1Tag2: 'Студентам',
+            material2Title: 'Пакет для преподавателя',
+            material2Text: 'Шаблоны заданий, примеры формулировок промтов, чек-листы для урока с использованием ИИ.',
+            material2Tag1: 'Методика',
+            material2Tag2: 'Преподавателям',
+            material3Title: 'Генератор тестов и рефератов',
+            material3Text: 'Пошаговая инструкция, как с помощью ИИ быстро сделать черновик теста или плана конспекта.',
+            material3Tag1: 'Тесты',
+            material3Tag2: 'Рефераты',
+
+            coursesCaption: 'Мини-курсы',
+            coursesTitle: 'Короткие курсы по ИИ',
+            course1Title: 'Знакомство с ИИ',
+            course1Text: 'Что такое нейросеть, чем может помочь студенту и преподавателю.',
+            course1Tag1: 'Вводный курс',
+            course2Title: 'Как задавать вопросы ИИ',
+            course2Text: 'Простые правила и примеры промтов, чтобы ответы были полезными.',
+            course2Tag1: 'Промты',
+            course2Tag2: 'Студенты + преподаватели',
+            course3Title: 'ИИ в работе преподавателя',
+            course3Text: 'Как использовать ИИ для подготовки заданий, конспектов и обратной связи студентам.',
+            course3Tag1: 'Преподаватели',
+            course4Title: 'Цифровая гигиена и ИИ',
+            course4Text: 'Как не слить личные данные и не «списать» всё за ИИ, а именно учиться.',
+            course4Tag1: 'Безопасность',
+
+            safetyCaption: 'Безопасность',
+            safetyTitle: 'Цифровая гигиена при работе с ИИ',
+            safetyIntro: 'Рекомендуется обсуждать эти темы со студентами каждый раз, когда в задании участвуют нейросети.',
+            safetyItem1: 'Не отправлять в ИИ фамилии, телефоны и другие личные данные студентов.',
+            safetyItem2: 'Не загружать документы с персональными данными (зачётки, договоры и т.п.).',
+            safetyItem3: 'Не копировать ответы ИИ без проверки — особенно по техническим предметам.',
+            safetyItem4: 'Отдельно проговаривать, где помощь ИИ допустима, а где это уже нарушение академ.честности.',
+
+            roadmapCaption: 'План развития',
+            roadmapTitle: 'Что можно добавить в течение 6 месяцев',
+            roadmapStep1Title: '1–2 месяц',
+            roadmapStep1Item1: 'Расширение каталога инструментов.',
+            roadmapStep1Item2: 'Добавление реальных кейсов с уроков колледжа.',
+            roadmapStep1Item3: 'Первый набор мини-курсов.',
+            roadmapStep2Title: '3–4 месяц',
+            roadmapStep2Item1: 'Личный кабинет преподавателя (избранное, шаблоны).',
+            roadmapStep2Item2: 'Сохранение готовых промтов и заданий.',
+            roadmapStep2Item3: 'Раздел «Лучшие практики колледжей РК».',
+            roadmapStep3Title: '5–6 месяц',
+            roadmapStep3Item1: 'Интеграция с LMS (по возможности).',
+            roadmapStep3Item2: 'Отдельные треки по специальностям.',
+            roadmapStep3Item3: 'Система бейджей/сертификатов для студентов и преподавателей.'
+        },
+
+        kk: {
+            navTitle: 'AI EDU PORTAL',
+            navSubtitle: 'Оқытушылар мен студенттерге арналған ЖИ порталы',
+            navCatalog: 'Каталог',
+            navNavigator: 'AI-навигатор',
+            navMaterials: 'Материалдар',
+            navCourses: 'Мини-курстар',
+            navSafety: 'Қауіпсіздік',
+
+            heroBadge: '<span>MVP</span>Күнделікті пайдалану үшін жұмыс нұсқасы',
+            heroTitle: 'Сабақта және үйде ЖИ-мен жұмыс істеуге арналған бір портал',
+            heroText: 'Мұнда білім беру үшін тексерілген ЖИ құралдары, қарапайым нұсқаулықтар, тапсырмалар үлгілері және AI-навигатор жинақталған. Мақсат – оқытушыны алмастыру емес, уақытты үнемдеп, материалды түсіндіруді жеңілдету.',
+            heroBtnCatalog: 'Құралдар каталогына өту',
+            heroBtnNavigator: 'AI-навигаторға тапсырма беру',
+            heroInfoForWhomTitle: 'Кімге арналған',
+            heroInfoForWhomText: '• Оқытушылар (сабаққа дайындық)<br>• Студенттер (өздігінен оқу)<br>• Әдіскерлер (әдістемелік материалдар)',
+            heroInfoPortalTitle: 'Портал не береді',
+            heroInfoPortalText: '• Тапсырмаға сәйкес ЖИ-құралдарды таңдау<br>• Дайын промпттар мен тапсырмалар<br>• ЖИ-ді қауіпсіз қолдану бойынша материалдар',
+            heroSummaryTitle: 'Қысқаша шолу',
+            heroStatToolsLabel: 'Каталогтағы құралдар саны',
+            heroStatAssignmentsLabel: 'тапсырмалар мен идеялар (жоспарланған)',
+            heroStatRoadmapLabel: 'айлық даму жоспары',
+            heroSummaryFooter: 'Қарапайымнан бастаңыз: рөлді таңдаңыз (оқытушы немесе студент), құралдарды сүзгіден өткізіңіз және нақты оқу тапсырмасы үшін бір-екі сервисті қолданып көріңіз.',
+
+            problemCaption: 'Неге бұл маңызды',
+            problemTitle: 'ЖИ-мен жұмыс істеудегі негізгі қиындықтар',
+            problemItem1: 'Қандай ЖИ-сервистерді студенттермен қауіпсіз қолдануға болатынын түсіну қиын.',
+            problemItem2: 'Сайттар өте көп, бірақ «қайсысы не үшін» екені түсініксіз.',
+            problemItem3: 'Оқытушыларда әр құралды жеке зерттеуге уақыт аз.',
+            problemItem4: 'Студенттер ЖИ-ді жиі «шпаргалка» ретінде қолданады, ал шын мәнінде оқу құралы ретінде емес.',
+            solutionTitle: 'Портал не ұсынады',
+            solutionItem1: 'Оқу тапсырмаларына бейімделген мұқият таңдалған ЖИ-құралдар.',
+            solutionItem2: 'Ұзақ нұсқаулықтардың орнына «1–2–3 қадам» форматындағы қысқа нұсқаулар.',
+            solutionItem3: 'Пәндер бойынша дайын тапсырма және промпт идеялары.',
+            solutionItem4: 'Сандық гигиена және ЖИ-ді қауіпсіз қолдану бөлімі.',
+
+            toolsCaption: 'Құралдар каталогы',
+            toolsTitle: 'Оқу тапсырмаларына арналған ЖИ-сервистерді таңдау',
+            toolsRoleLabel: 'Пайдаланушы рөлі',
+            roleAll: 'Барлығы',
+            roleTeacher: 'Оқытушы',
+            roleStudent: 'Студент',
+            toolsSearchLabel: 'Тапсырма немесе кілт сөз бойынша іздеу',
+            toolsSearchPlaceholder: 'Мысалы: «ЛЖЖ презентациясы», «SQL», «сандық гигиена»',
+            toolsCategoryLabel: 'Құрал түрі',
+            categoryAll: 'Барлығы',
+            categoryText: 'Мәтін',
+            categoryImage: 'Бейнелер',
+            categoryVideo: 'Видео',
+            categoryAudio: 'Аудио',
+            categoryPresentation: 'Презентациялар',
+            categoryAgent: 'ЖИ-агенттер',
+            categorySubject: 'Пәндік',
+
+            subjectsCaption: 'Пәндер бойынша',
+            subjectsTitle: 'Пәндерде ЖИ-ді қалай қолдануға болады',
+            subjectsIntro: 'Төменде – жалпы мысалдар. Нақты жұмыста сіз каталогқа кіріп, құралды таңдап, ұқсас түрде қолданасыз.',
+            subjectsItem1: '<strong>Желілік технологиялар, ЛЖЖ:</strong> VLAN түсіндіру, IP-жоспар, желіні баптау бойынша тапсырмалар генерациясы.',
+            subjectsItem2: '<strong>Деректер базасы:</strong> кестелер мысалдарын, SQL тапсырмаларын генерациялау, студент қателерін талдау.',
+            subjectsItem3: '<strong>Бағдарламалау:</strong> код бойынша кеңестер, алгоритмдерді түсіндіру, тапсырмалар тренажері.',
+            subjectsItem4: '<strong>Тілдер (EN/KZ/RU):</strong> грамматиканы жаттықтыру, мәтіндерді қайта жазу, сөздікпен жұмыс.',
+            subjectsItem5: '<strong>Дизайн және мультимедиа:</strong> иллюстрациялар, презентациялар, жоба постерлерін жасау.',
+
+            navigatorCaption: 'AI-навигатор',
+            navigatorTitle: 'Сіздің тапсырмаңызға сәйкес құралдарды таңдау',
+            navigatorText: 'Тапсырмаңызды қарапайым тілмен жазыңыз — AI-навигатор қай ЖИ-сервистерден бастау керегін және порталдың қандай материалдарын қолдануға болатынын ұсынады.',
+
+            materialsCaption: 'Материалдар',
+            materialsTitle: 'Дереу қолдануға болатын материалдар',
+            material1Title: 'Практикалық тапсырмалар жинағы',
+            material1Text: 'ЛЖЖ, деректер базасы, бағдарламалау, сандық гигиена бойынша дайын тапсырмалар мен мини-жобалар идеялары.',
+            material1Tag1: 'Практика',
+            material1Tag2: 'Студенттерге',
+            material2Title: 'Оқытушыға арналған пакет',
+            material2Text: 'Тапсырма шаблондары, промпт формулировкасы мысалдары, ЖИ-мен сабақ өткізуге арналған чек-листтер.',
+            material2Tag1: 'Әдістеме',
+            material2Tag2: 'Оқытушыларға',
+            material3Title: 'Тесттер мен рефераттар генераторы',
+            material3Text: 'ЖИ көмегімен тесттің қаражобасын немесе конспект жоспарын жылдам жасауға арналған нұсқаулық.',
+            material3Tag1: 'Тесттер',
+            material3Tag2: 'Рефераттар',
+
+            coursesCaption: 'Мини-курстар',
+            coursesTitle: 'ЖИ бойынша қысқа курстар',
+            course1Title: 'ЖИ-мен танысу',
+            course1Text: 'Нейрожелінің не екенін, студентке және оқытушыға қалай көмектесетінін түсіндіру.',
+            course1Tag1: 'Кіріспе курс',
+            course2Title: 'ЖИ-ге сұрақты қалай қою керек',
+            course2Text: 'Пайдалы жауап алу үшін промпт жазудың қарапайым ережелері мен мысалдары.',
+            course2Tag1: 'Промпттар',
+            course2Tag2: 'Студенттер + оқытушылар',
+            course3Title: 'Оқытушы жұмысында ЖИ',
+            course3Text: 'ЖИ-ді тапсырмалар, конспектілер және студенттерге кері байланыс дайындау үшін қалай қолдануға болады.',
+            course3Tag1: 'Оқытушыларға',
+            course4Title: 'Сандық гигиена және ЖИ',
+            course4Text: 'Жеке деректерді қалай қорғау және ЖИ-ді «бәрін көшіріп алу» үшін емес, оқу үшін қолдану.',
+            course4Tag1: 'Қауіпсіздік',
+
+            safetyCaption: 'Қауіпсіздік',
+            safetyTitle: 'ЖИ-мен жұмыс кезіндегі сандық гигиена',
+            safetyIntro: 'Әр жолы нейрожелілер қолданылатын тапсырма берілгенде, бұл тақырыптарды студенттермен талқылау ұсынылады.',
+            safetyItem1: 'ЖИ-ге студенттердің тегі, телефон нөмірі және басқа жеке деректерін жібермеу.',
+            safetyItem2: 'Жеке деректері бар құжаттарды (зачетка, келісімшарттар және т.б.) жүктемеу.',
+            safetyItem3: 'Әсіресе техникалық пәндер бойынша ЖИ жауабын тексерусіз көшірмеу.',
+            safetyItem4: 'Қай жерде ЖИ көмегі рұқсат етілгенін, ал қай жерде бұл академиялық адалдықты бұзу екенін бөлек түсіндіру.',
+
+            roadmapCaption: 'Даму жоспары',
+            roadmapTitle: '6 ай ішінде не қосуға болады',
+            roadmapStep1Title: '1–2 ай',
+            roadmapStep1Item1: 'Құралдар каталогын кеңейту.',
+            roadmapStep1Item2: 'Колледж сабақтарынан нақты кейстерді қосу.',
+            roadmapStep1Item3: 'Алғашқы мини-курстар пакеті.',
+            roadmapStep2Title: '3–4 ай',
+            roadmapStep2Item1: 'Оқытушының жеке кабинеті (таңдаулы, шаблондар).',
+            roadmapStep2Item2: 'Дайын промпттар мен тапсырмаларды сақтау.',
+            roadmapStep2Item3: '«ҚР колледждерінің үздік тәжірибелері» бөлімі.',
+            roadmapStep3Title: '5–6 ай',
+            roadmapStep3Item1: 'LMS-пен интеграция (мүмкіндікке қарай).',
+            roadmapStep3Item2: 'Мамандықтар бойынша бөлек тректер.',
+            roadmapStep3Item3: 'Студенттер мен оқытушылар үшін бейдж/сертификат жүйесі.'
+        },
+
+        en: {
+            navTitle: 'AI EDU PORTAL',
+            navSubtitle: 'AI portal for teachers and students',
+            navCatalog: 'Catalog',
+            navNavigator: 'AI Navigator',
+            navMaterials: 'Materials',
+            navCourses: 'Mini-courses',
+            navSafety: 'Safety',
+
+            heroBadge: '<span>MVP</span>Working version of the portal for daily use',
+            heroTitle: 'One portal for using AI<br> in class and at home',
+            heroText: 'Here you will find vetted AI tools for education, simple step-by-step guides, sample assignments and an AI navigator. The goal is not to replace the teacher, but to save time and help explain the material better.',
+            heroBtnCatalog: 'Go to tools catalog',
+            heroBtnNavigator: 'Ask AI navigator',
+            heroInfoForWhomTitle: 'Who it is for',
+            heroInfoForWhomText: '• Teachers (lesson preparation)<br>• Students (self-study)<br>• Methodologists (teaching materials)',
+            heroInfoPortalTitle: 'What the portal gives',
+            heroInfoPortalText: '• Matching AI tools to your task<br>• Ready-made prompts and assignments<br>• Materials on safe AI usage',
+            heroSummaryTitle: 'Quick overview',
+            heroStatToolsLabel: 'Tools in catalog',
+            heroStatAssignmentsLabel: 'assignments and ideas (planned)',
+            heroStatRoadmapLabel: 'months of roadmap',
+            heroSummaryFooter: 'Start simple: choose a role (teacher or student), filter tools and try one or two services for a real learning task.',
+
+            problemCaption: 'Why it matters',
+            problemTitle: 'Main challenges when working with AI',
+            problemItem1: 'It is hard to understand which AI services are safe to use with students.',
+            problemItem2: 'There are many websites but no simple explanation “what is for what”.',
+            problemItem3: 'Teachers have little time to explore every tool separately.',
+            problemItem4: 'Students often use AI as a “cheat sheet” instead of a learning assistant.',
+            solutionTitle: 'What the portal offers',
+            solutionItem1: 'Carefully selected AI tools for educational tasks.',
+            solutionItem2: 'Short “step 1–2–3” guides instead of long manuals.',
+            solutionItem3: 'Ready ideas for assignments and prompts for different subjects.',
+            solutionItem4: 'Section on digital hygiene and safe AI usage.',
+
+            toolsCaption: 'Tools catalog',
+            toolsTitle: 'Selecting AI services for learning tasks',
+            toolsRoleLabel: 'User role',
+            roleAll: 'All',
+            roleTeacher: 'Teacher',
+            roleStudent: 'Student',
+            toolsSearchLabel: 'Search by task or keyword',
+            toolsSearchPlaceholder: 'E.g. “LAN presentation”, “SQL”, “digital hygiene”',
+            toolsCategoryLabel: 'Tool type',
+            categoryAll: 'All',
+            categoryText: 'Text',
+            categoryImage: 'Images',
+            categoryVideo: 'Video',
+            categoryAudio: 'Audio',
+            categoryPresentation: 'Presentations',
+            categoryAgent: 'AI agents',
+            categorySubject: 'Subject-specific',
+
+            subjectsCaption: 'By subjects',
+            subjectsTitle: 'Examples of using AI in subjects',
+            subjectsIntro: 'Below are general examples. In real work you will open the catalog, choose a tool and use it in a similar way.',
+            subjectsItem1: '<strong>Networking, LAN:</strong> explaining VLAN, IP planning, generating tasks on configuring networks.',
+            subjectsItem2: '<strong>Databases:</strong> generating example tables, SQL tasks, analysing student errors.',
+            subjectsItem3: '<strong>Programming:</strong> code hints, explaining algorithms, problem-solving trainer.',
+            subjectsItem4: '<strong>Languages (EN/KZ/RU):</strong> practising grammar, rewriting texts, vocabulary work.',
+            subjectsItem5: '<strong>Design and multimedia:</strong> creating illustrations, presentations, project posters.',
+
+            navigatorCaption: 'AI navigator',
+            navigatorTitle: 'Selecting tools for your task',
+            navigatorText: 'Describe your task in simple words — the AI navigator will suggest which AI services to start with and which portal materials to use.',
+
+            materialsCaption: 'Materials',
+            materialsTitle: 'What you can use right away',
+            material1Title: 'Set of practical assignments',
+            material1Text: 'Ready ideas for tasks and mini-projects: LAN, databases, programming, digital hygiene.',
+            material1Tag1: 'Practice',
+            material1Tag2: 'For students',
+            material2Title: 'Teacher’s toolkit',
+            material2Text: 'Task templates, prompt wording examples, checklists for lessons with AI.',
+            material2Tag1: 'Methodology',
+            material2Tag2: 'For teachers',
+            material3Title: 'Test and essay generator',
+            material3Text: 'Step-by-step guide for quickly creating a draft test or lesson outline with AI.',
+            material3Tag1: 'Tests',
+            material3Tag2: 'Essays',
+
+            coursesCaption: 'Mini-courses',
+            coursesTitle: 'Short courses about AI',
+            course1Title: 'Introduction to AI',
+            course1Text: 'What a neural network is and how it can help students and teachers.',
+            course1Tag1: 'Intro course',
+            course2Title: 'How to ask AI questions',
+            course2Text: 'Simple rules and examples of prompts to get useful answers.',
+            course2Tag1: 'Prompts',
+            course2Tag2: 'Students + teachers',
+            course3Title: 'AI in teacher’s work',
+            course3Text: 'How to use AI to prepare assignments, notes and feedback for students.',
+            course3Tag1: 'For teachers',
+            course4Title: 'Digital hygiene and AI',
+            course4Text: 'How not to leak personal data and not let AI “do everything for you”, but actually learn.',
+            course4Tag1: 'Safety',
+
+            safetyCaption: 'Safety',
+            safetyTitle: 'Digital hygiene when working with AI',
+            safetyIntro: 'It is recommended to discuss these topics with students every time neural networks are involved in an assignment.',
+            safetyItem1: 'Do not send students’ names, phone numbers or other personal data to AI.',
+            safetyItem2: 'Do not upload documents with personal data (grade books, contracts, etc.).',
+            safetyItem3: 'Do not copy AI answers without checking them — especially in technical subjects.',
+            safetyItem4: 'Explain separately where AI help is allowed and where it becomes an academic integrity violation.',
+
+            roadmapCaption: 'Development roadmap',
+            roadmapTitle: 'What can be added within 6 months',
+            roadmapStep1Title: 'Months 1–2',
+            roadmapStep1Item1: 'Expanding the tools catalog.',
+            roadmapStep1Item2: 'Adding real case studies from college classes.',
+            roadmapStep1Item3: 'First set of mini-courses.',
+            roadmapStep2Title: 'Months 3–4',
+            roadmapStep2Item1: 'Teacher’s personal account (favorites, templates).',
+            roadmapStep2Item2: 'Saving ready prompts and assignments.',
+            roadmapStep2Item3: 'Section “Best practices of colleges in Kazakhstan”.',
+            roadmapStep3Title: 'Months 5–6',
+            roadmapStep3Item1: 'Integration with LMS (where possible).',
+            roadmapStep3Item2: 'Separate tracks by specialty.',
+            roadmapStep3Item3: 'Badge/certificate system for students and teachers.'
+        }
+    };
+
+    function applyTranslations(lang) {
+        const dict = translations[lang] || translations['ru'];
+        document.documentElement.lang = lang;
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (dict[key]) {
+                el.innerHTML = dict[key];
+            }
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (dict[key]) {
+                el.placeholder = dict[key];
+            }
+        });
+    }
+
+    // --------------------------------------------------------------------
+    // 8. Переключатель языков
     // --------------------------------------------------------------------
     const langButtons = document.querySelectorAll('.lang-btn');
     let currentLang = 'ru';
@@ -1309,18 +1695,15 @@ document.addEventListener('DOMContentLoaded', () => {
             langButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentLang = btn.dataset.lang || 'ru';
-            // Здесь позже можно подключить полноценный словарь переводов
-            console.log('Текущий язык:', currentLang);
+            applyTranslations(currentLang);
         });
     });
 
     // --------------------------------------------------------------------
-    // 8. МОДАЛЬНОЕ ОКНО С YOUTUBE
-    //    Используется для логотипов ChatGPT и Gemini (и можно для других).
+    // 9. МОДАЛЬНОЕ ОКНО С YOUTUBE
     // --------------------------------------------------------------------
     function openVideoModal(embedUrl) {
         if (!videoModal || !videoFrame) return;
-        // Автовоспроизведение
         videoFrame.src = embedUrl + '?autoplay=1';
         videoModal.classList.add('open');
     }
@@ -1328,7 +1711,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeVideoModal() {
         if (!videoModal || !videoFrame) return;
         videoModal.classList.remove('open');
-        // Очищаем src, чтобы видео останавливалось
         videoFrame.src = '';
     }
 
@@ -1346,9 +1728,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --------------------------------------------------------------------
-    // 9. Стартовый рендер
+    // 10. Стартовый рендер
     // --------------------------------------------------------------------
     setRole('all');
+    applyTranslations('ru');
 });
 </script>
 </body>
