@@ -1932,32 +1932,37 @@ document.addEventListener("keydown", (e) => {
         top.className = "tool-top";
 
         const logo = document.createElement("div");
-        logo.className = "tool-logo";
+logo.className = "tool-logo";
 
-        // --- 1) логотип-картинка, если указан ---
-        if (tool.logoType === "image" && tool.logoSrc) {
-            const img = document.createElement("img");
-            img.src = tool.logoSrc;
-            img.alt = (tool.name[lang] || tool.name.ru) + " logo";
-            img.style.maxWidth = "100%";
-            img.style.maxHeight = "100%";
-            img.style.borderRadius = "7px";
-            logo.appendChild(img);
+// --- 1) логотип-картинка, если указан ---
+if (tool.logoType === "image" && tool.logoSrc) {
+    const img = document.createElement("img");
+    img.src = tool.logoSrc;
+    img.alt = (tool.name[lang] || tool.name.ru) + " logo";
+    img.style.maxWidth = "100%";
+    img.style.maxHeight = "100%";
+    img.style.borderRadius = "7px";
+    logo.appendChild(img);
+} else {
+    // --- 2) fallback: буквы, как раньше ---
+    const logoLetters = (tool.name[lang] || tool.name.ru)
+        .split(" ")
+        .map(w => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    logo.textContent = logoLetters;
+}
 
-            // клик по логотипу — открыть YouTube (если есть)
-            // ==== логотип инструмента ====
-       const logo = document.createElement("div");
-      logo.className = "tool-logo";
-
-    // если есть youtube-ссылка — активируем всплывающее окно
-    if (tool.youtube) {
+// если есть youtube-ссылка — активируем всплывающее окно
+if (tool.youtube) {
     logo.style.cursor = "pointer";
     logo.title = "Открыть видео-обзор";
     logo.addEventListener("click", () => {
         openVideoModal(tool.youtube);
     });
-}
-        else {
+} 
+else {
             // --- 2) fallback: буквы, как раньше ---
             const logoLetters = (tool.name[lang] || tool.name.ru)
                 .split(" ")
@@ -2076,6 +2081,7 @@ document.addEventListener("keydown", (e) => {
 </body>
 
 </html>
+
 
 
 
