@@ -23,7 +23,7 @@
         body {
             margin: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: var(--bg);
+            background: var(--bg);  
             color: var(--text);
         }
 
@@ -1356,7 +1356,229 @@
 
     /* ==== КАТАЛОГ ИНСТРУМЕНТОВ С ПЕРЕВОДАМИ ==== */
 
-    const tools = [
+// ---- ДАННЫЕ ПО ИНСТРУМЕНТАМ (3 языка + логотипы + YouTube) ----
+const tools = [
+    {
+        id: "chatgpt",
+
+        // Название (3 языка)
+        name: {
+            ru: "ChatGPT / GPT-модели",
+            kk: "ChatGPT / GPT-модельдері",
+            en: "ChatGPT / GPT models"
+        },
+
+        // Короткое описание
+        short: {
+            ru: "Текстовый ассистент для любых предметов.",
+            kk: "Кез келген пәнге арналған мәтіндік ассистент.",
+            en: "Text assistant for any subject."
+        },
+
+        category: "text",
+        audience: ["student", "teacher"],
+
+        // Для чего использовать
+        useFor: {
+            ru: "подготовка конспектов, заданий, тестов, объяснений и примеров",
+            kk: "конспект, тапсырмалар, тесттер, түсіндірулер мен мысалдар дайындау",
+            en: "preparing notes, tasks, tests, explanations and examples"
+        },
+
+        // Плюсы
+        plus: {
+            ru: "Понимает русский и казахский, подходит под большинство дисциплин.",
+            kk: "Орыс және қазақ тілдерін түсінеді, көптеген пәндерге сай келеді.",
+            en: "Understands Russian and Kazakh, fits most subjects."
+        },
+
+        // Минусы
+        minus: {
+            ru: "Нужны навыки промт-инжиниринга и контроль ответов.",
+            kk: "Промпт құрастыру дағдылары және жауаптарды тексеру қажет.",
+            en: "Requires prompt-engineering skills and checking the answers."
+        },
+
+        // Цена
+        price: {
+            ru: "Freemium / подписка",
+            kk: "Freemium / жазылым",
+            en: "Freemium / subscription"
+        },
+
+        // Теги (каждый тег тоже на 3 языках)
+        tags: [
+            { ru: "Текст",           kk: "Мәтін",                 en: "Text" },
+            { ru: "Объяснение тем",  kk: "Тақырыпты түсіндіру",   en: "Explain topics" },
+            { ru: "Создание заданий",kk: "Тапсырма жасау",        en: "Create tasks" }
+        ],
+
+        // ЛОГОТИП и YOUTUBE
+        logoType: "image",
+        logoText: "C/",
+        logoSrc: "assets/ChatGPT_logo.png",
+        youtube: "https://www.youtube.com/embed/kIhb5pEo_j0",
+
+        url: "https://chatgpt.com"
+    },
+
+    {
+        id: "gemini",
+
+        name: {
+            ru: "Gemini (Google ИИ)",
+            kk: "Gemini (Google ЖИ)",
+            en: "Gemini (Google AI)"
+        },
+        short: {
+            ru: "Генерация текста, изображений и работа с файлами.",
+            kk: "Мәтін, сурет генерациясы және файлдармен жұмыс.",
+            en: "Text and image generation and file analysis."
+        },
+
+        category: "text",
+        audience: ["student", "teacher"],
+
+        useFor: {
+            ru: "планы уроков, подготовка презентаций и заданий, работа с документами",
+            kk: "сабақ жоспарларын, презентация және тапсырмалар дайындау, құжаттармен жұмыс",
+            en: "lesson plans, presentations, assignments, working with documents"
+        },
+        plus: {
+            ru: "Удобен при работе с Google Документами и Google Диском.",
+            kk: "Google Құжаттар және Google Дискімен жұмысқа ыңғайлы.",
+            en: "Convenient when working with Google Docs and Drive."
+        },
+        minus: {
+            ru: "Нужно учитывать политику конфиденциальности и настройки аккаунта.",
+            kk: "Құпиялылық саясатын және аккаунт баптауларын ескеру қажет.",
+            en: "Need to consider privacy policy and account settings."
+        },
+        price: {
+            ru: "Freemium",
+            kk: "Freemium",
+            en: "Freemium"
+        },
+        tags: [
+            { ru: "Документы",      kk: "Құжаттар",           en: "Documents" },
+            { ru: "Планы уроков",   kk: "Сабақ жоспарлары",   en: "Lesson plans" },
+            { ru: "Презентации",    kk: "Презентациялар",     en: "Presentations" }
+        ],
+
+        logoType: "image",
+        logoText: "G/",
+        logoSrc: "assets/gemini-color.png",
+        // из https://youtu.be/_fuimO6ErKI → embed
+        youtube: "https://www.youtube.com/embed/_fuimO6ErKI",
+
+        url: "https://gemini.google.com"
+    },
+
+    {
+        id: "canva",
+
+        name: {
+            ru: "Canva с ИИ-ассистентом",
+            kk: "Canva ИИ-ассистентпен",
+            en: "Canva with AI assistant"
+        },
+        short: {
+            ru: "Создание слайдов, постеров и инфографики.",
+            kk: "Слайдтар, постерлер және инфографика жасау.",
+            en: "Create slides, posters and infographics."
+        },
+
+        category: "presentation",
+        audience: ["student", "teacher"],
+
+        useFor: {
+            ru: "оформление презентаций, постеров, визуализация проектов",
+            kk: "презентация, постер және жобаларды визуализациялау",
+            en: "designing presentations, posters and visualising projects"
+        },
+        plus: {
+            ru: "Много шаблонов для образования, простой интерфейс.",
+            kk: "Білім беру үшін көптеген шаблондар, интерфейсі қарапайым.",
+            en: "Many education templates, simple interface."
+        },
+        minus: {
+            ru: "Важно учитывать авторские права на изображения.",
+            kk: "Суреттердің авторлық құқықтарын ескеру маңызды.",
+            en: "Need to respect image copyrights."
+        },
+        price: {
+            ru: "Бесплатно + Pro",
+            kk: "Тегін + Pro",
+            en: "Free + Pro"
+        },
+        tags: [
+            { ru: "Презентации",     kk: "Презентациялар",      en: "Presentations" },
+            { ru: "Дизайн",          kk: "Дизайн",              en: "Design" },
+            { ru: "Студенческие проекты", kk: "Студенттік жобалар", en: "Student projects" }
+        ],
+
+        logoType: "image",
+        logoText: "C",
+        logoSrc: "assets/canva-logo.png",
+        // youtube: "..."  // при желании можно добавить ролик
+
+        url: "https://www.canva.com"
+    },
+
+    {
+        id: "slidesai",
+
+        name: {
+            ru: "SlidesAI / PowerPoint AI",
+            kk: "SlidesAI / PowerPoint ЖИ",
+            en: "SlidesAI / PowerPoint AI"
+        },
+        short: {
+            ru: "Создание презентаций из текста.",
+            kk: "Мәтіннен презентация жасау.",
+            en: "Create presentations from plain text."
+        },
+
+        category: "presentation",
+        audience: ["teacher"],
+
+        useFor: {
+            ru: "быстрая подготовка уроков и докладов по текстовому плану",
+            kk: "мәтіндік жоспар бойынша сабақ пен баяндама презентациясын тез дайындау",
+            en: "quickly preparing lesson or talk slides from a text outline"
+        },
+        plus: {
+            ru: "Сильно экономит время преподавателя.",
+            kk: "Оқытушы уақытының көп бөлігін үнемдейді.",
+            en: "Saves a lot of teacher time."
+        },
+        minus: {
+            ru: "Готовые слайды требуют адаптации под конкретную группу.",
+            kk: "Дайын слайдтарды топқа бейімдеу қажет.",
+            en: "Slides still need adaptation to a specific group."
+        },
+        price: {
+            ru: "Freemium",
+            kk: "Freemium",
+            en: "Freemium"
+        },
+        tags: [
+            { ru: "Презентации", kk: "Презентациялар", en: "Presentations" },
+            { ru: "Автоматизация", kk: "Автоматтандыру", en: "Automation" }
+        ],
+
+        logoType: "image",
+        logoText: "S/",
+        logoSrc: "assets/slide_ai.png",
+        // youtube: "..."
+
+        url: "https://www.slidesai.io"
+    },
+
+
+
+    
+      /* ====  const tools = [
     {
         id: "chatgpt",
         logoType: "image",
@@ -1566,7 +1788,7 @@
                 {ru: "Автоматизация", kk: "Автоматтандыру", en: "Automation"}
             ],
             url: "https://www.slidesai.io"
-        },
+        }, ==== */
         {
             name: {
                 ru: "Midjourney / DALL·E / Аналоги",
@@ -1920,6 +2142,7 @@
 </body>
 
 </html>
+
 
 
 
