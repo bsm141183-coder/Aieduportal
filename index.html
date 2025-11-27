@@ -1911,6 +1911,38 @@
     const roleTeacherBtn = document.getElementById("roleTeacherBtn");
     const roleStudentBtn = document.getElementById("roleStudentBtn");
 
+    // ==== элементы модального окна ====
+const videoModal        = document.getElementById("videoModal");
+const videoFrame        = document.getElementById("videoFrame");
+const videoModalClose   = document.getElementById("videoModalClose");
+const videoModalBackdrop= document.getElementById("videoModalBackdrop");
+  /* ==== ВСТАВЛЯЕМ ЗДЕСЬ! СРАЗУ ПОСЛЕ ОБЪЯВЛЕНИЙ ==== */
+
+function openVideoModal(embedUrl) {
+    if (!videoModal || !videoFrame) return;
+    videoFrame.src = embedUrl + "?autoplay=1";
+    videoModal.classList.add("open");
+}
+
+function closeVideoModal() {
+    if (!videoModal || !videoFrame) return;
+    videoModal.classList.remove("open");
+    videoFrame.src = "";
+}
+
+if (videoModalClose) {
+    videoModalClose.addEventListener("click", closeVideoModal);
+}
+if (videoModalBackdrop) {
+    videoModalBackdrop.addEventListener("click", closeVideoModal);
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && videoModal && videoModal.classList.contains("open")) {
+        closeVideoModal();
+    }
+});
+
    function renderTools() {
     if (!toolsGrid) return;
 
@@ -2088,6 +2120,7 @@
 </body>
 
 </html>
+
 
 
 
