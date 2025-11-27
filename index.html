@@ -1869,15 +1869,24 @@ const videoModal        = document.getElementById("videoModal");
 const videoFrame        = document.getElementById("videoFrame");
 const videoModalClose   = document.getElementById("videoModalClose");
 const videoModalBackdrop= document.getElementById("videoModalBackdrop");
-  /* ==== ВСТАВЛЯЕМ ЗДЕСЬ! СРАЗУ ПОСЛЕ ОБЪЯВЛЕНИЙ ==== */
+/* ==== ВСТАВЛЯЕМ ЗДЕСЬ! СРАЗУ ПОСЛЕ ОБЪЯВЛЕНИЙ ==== */
 
-// 1) ДОБАВЬ ЭТУ ФУНКЦИЮ
-function openVideoModal(embedUrl) {
+// ОТКРЫВАЕТ МОДАЛЬНОЕ ОКНО YOUTUBE
+function openVideoModal(url) {
     if (!videoModal || !videoFrame) return;
-    videoFrame.src = embedUrl + "?autoplay=1";
+    const sep = url.includes("?") ? "&" : "?";
+    videoFrame.src = url + sep + "autoplay=1&rel=0";
     videoModal.classList.add("open");
 }
 
+// ОТКРЫТИЕ ВИДЕО ПО ID ИНСТРУМЕНТА (chatgpt, gemini, canva и т.д.)
+function openVideo(id) {
+    const tool = tools.find(t => t.id === id);
+    if (!tool || !tool.youtube) return;
+    openVideoModal(tool.youtube);
+}
+
+// ЗАКРЫТИЕ МОДАЛКИ
 function closeVideoModal() {
     if (!videoModal || !videoFrame) return;
     videoModal.classList.remove("open");
@@ -2082,6 +2091,7 @@ renderTools();
 </body>
 
 </html>
+
 
 
 
