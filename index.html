@@ -1872,10 +1872,11 @@ const videoModalClose   = document.getElementById("videoModalClose");
 const videoModalBackdrop= document.getElementById("videoModalBackdrop");
   /* ==== ВСТАВЛЯЕМ ЗДЕСЬ! СРАЗУ ПОСЛЕ ОБЪЯВЛЕНИЙ ==== */
 
-function openVideo(id) {
-    const tool = tools.find(t => t.id === id);
-    if (!tool || !tool.youtube) return;
-    openVideoModal(tool.youtube);
+// 1) ДОБАВЬ ЭТУ ФУНКЦИЮ
+function openVideoModal(embedUrl) {
+    if (!videoModal || !videoFrame) return;
+    videoFrame.src = embedUrl + "?autoplay=1";
+    videoModal.classList.add("open");
 }
 
 function closeVideoModal() {
@@ -2082,6 +2083,7 @@ renderTools();
 </body>
 
 </html>
+
 
 
 
