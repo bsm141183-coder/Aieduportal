@@ -1477,54 +1477,58 @@
 
         url: "https://chatgpt.com"
     },          
-        {
-       id: "Gemini",
-        logoType: "image",
-        logoSrc: "assets/gemini-color.png",
-        youtube: "https://www.youtube.com/embed/kIhb5pEo_j0",
-            
-            name: {
-                ru: "Gemini / Аналоги от Google",
-                kk: "Gemini / Google баламалары",
-                en: "Gemini / Google analogues"
-            },
-            short: {
-                ru: "Генерация текста, картинок и анализ файлов.",
-                kk: "Мәтін, сурет генерациясы және файлдарды талдау.",
-                en: "Text & image generation and file analysis."
-            },
-            category: "text",
-            audience: ["student", "teacher"],
-            useFor: {
-                ru: "планы уроков, подготовка презентаций и заданий",
-                kk: "сабақ жоспарлары, презентациялар мен тапсырмалар дайындау",
-                en: "lesson plans, presentations and assignments"
-            },
-            plus: {
-                ru: "Удобен при работе с документами Google.",
-                kk: "Google құжаттарымен жұмыс істеуге ыңғайлы.",
-                en: "Convenient with Google Docs ecosystem."
-            },
-            minus: {
-                ru: "Нужно учитывать политику конфиденциальности.",
-                kk: "Құпиялық саясатын ескеру қажет.",
-                en: "Need to consider privacy policy."
-            },
-         price: {
-           ru: "Бесплатно / подписка",
-           kk: "Тегін / жазылым",
-           en: "Free / subscription"
+      {
+    id: "gemini",
+    logoType: "image",
+    logoSrc: "assets/gemini-color.png",
+    youtube: "https://www.youtube.com/embed/_fuimO6ErKI",
+
+    name: {
+        ru: "Gemini / Аналоги от Google",
+        kk: "Gemini / Google баламалары",
+        en: "Gemini / Google analogues"
+    },
+    short: {
+        ru: "Генерация текста, картинок и анализ файлов.",
+        kk: "Мәтін, сурет генерациясы және файлдарды талдау.",
+        en: "Text & image generation and file analysis."
+    },
+
+    category: "text",
+    audience: ["student", "teacher"],
+
+    useFor: {
+        ru: "планы уроков, подготовка презентаций и заданий",
+        kk: "сабақ жоспарлары, презентациялар мен тапсырмалар дайындау",
+        en: "lesson plans, presentations and assignments"
+    },
+    plus: {
+        ru: "Удобен при работе с документами Google.",
+        kk: "Google құжаттарымен жұмыс істеуге ыңғайлы.",
+        en: "Convenient with Google Docs ecosystem."
+    },
+    minus: {
+        ru: "Нужно учитывать политику конфиденциальности.",
+        kk: "Құпиялық саясатын ескеру қажет.",
+        en: "Need to consider privacy policy."
+    },
+
+    price: {
+        ru: "Бесплатно",
+        kk: "Тегін",
+        en: "Free"
+    },
+
+    tags: [
+        {ru: "Текст", kk: "Мәтін", en: "Text"},
+        {ru: "Презентации", kk: "Презентациялар", en: "Presentations"},
+        {ru: "Google Docs", kk: "Google Docs", en: "Google Docs"}
+    ],
+
+    url: "https://gemini.google.com"
 },
 
-tags: [
-    {ru: "Текст", kk: "Мәтін", en: "Text"},
-    {ru: "Анализ файлов", kk: "Файл талдау", en: "File analysis"},
-    {ru: "Генерация изображений", kk: "Сурет генерациясы", en: "Image generation"}
-],
-
-url: "https://gemini.google.com"
-},
-        },
+        
         {
         id: "Canva",
         logoType: "image",
@@ -2072,12 +2076,14 @@ else {
         });
     });
 
-    toolsInitialized = true;
-    renderTools();
+    ];
+toolsInitialized = true;
+renderTools();
 </script>
 </body>
 
 </html>
+
 
 
 
