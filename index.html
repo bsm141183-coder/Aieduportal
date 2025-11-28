@@ -558,6 +558,62 @@
             font-weight: 600;
             box-shadow: 0 0 0 1px #bfdbfe;
         }
+
+    /* ==== МОДАЛЬНОЕ ОКНО ДЛЯ YOUTUBE ==== */
+.video-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.6);
+    z-index: 50;
+}
+
+.video-modal.open {
+    display: flex;
+}
+
+.video-modal-content {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    padding: 8px;
+    width: 90%;
+    max-width: 720px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.5);
+}
+
+.video-modal-inner {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 */
+}
+
+.video-modal-inner iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 8px;
+}
+
+.video-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+}
+    
+    
+    
+    
     </style>
 </head>
 <body>
@@ -1791,6 +1847,43 @@
             url: "https://www.yeschat.ai/gpts-9t557avV9qV-Cyber-Aid?utm_source=chatgpt.com"
         }
     ];
+function openVideo(id) {
+    const tool = tools.find(t => t.id === id);
+    if (!tool || !tool.youtube) return;
+
+    const frame = document.getElementById("videoFrame");
+    const modal = document.getElementById("videoModal");
+    if (!frame || !modal) return;
+
+    // добавляем autoplay
+    const baseUrl = tool.youtube;
+    const url = baseUrl.includes("?")
+        ? baseUrl + "&autoplay=1"
+        : baseUrl + "?autoplay=1";
+
+    frame.src = url;
+    modal.classList.add("open");
+}
+
+function closeVideo() {
+    const modal = document.getElementById("videoModal");
+    const frame = document.getElementById("videoFrame");
+    if (modal) modal.classList.remove("open");
+    if (frame) frame.src = ""; // останавливаем видео
+}
+
+// закрытие по клику по фону
+document.addEventListener("click", (e) => {
+    const modal = document.getElementById("videoModal");
+    if (!modal) return;
+    if (e.target === modal) {
+        closeVideo();
+    }
+});
+
+
+
+    
 
     const toolsGrid      = document.getElementById("toolsGrid");
     const searchInput    = document.getElementById("searchInput");
@@ -1835,41 +1928,55 @@
             const card = document.createElement("div");
             card.className = "tool-card";
 
-            const logoLetters = (tool.name[lang] || tool.name.ru).split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+           const logoLetters = (tool.name[lang] || tool.name.ru)
+    .split(" ")
+    .map(w => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-            const tagsHtml = (tool.tags || [])
-                .map(tag => `<span class="tool-tag">${tag[lang] || tag.ru}</span>`)
-                .join("");
+const tagsHtml = (tool.tags || [])
+    .map(tag => `<span class="tool-tag">${tag[lang] || tag.ru}</span>`)
+    .join("");
 
-            card.innerHTML = `
-                <div class="tool-top">
-                  <div class="tool-logo">
-    ${
-        tool.logoType === "image" 
-        ? `<img src="${tool.logoSrc}" style="width:100%;height:100%;object-fit:contain;">`
-        : logoLetters
-    }
-</div>
-                    <div>
-                        <div class="tool-name">${tool.name[lang] || tool.name.ru}</div>
-                        <div class="tool-meta">${tool.short[lang] || tool.short.ru}</div>
-                    </div>
-                </div>
-                <div class="tool-meta" style="margin-top:4px;">
-                    <strong>${dict.toolLabelFor}:</strong> ${tool.useFor[lang] || tool.useFor.ru}
-                </div>
-                <div class="tool-meta"><strong>${dict.toolLabelPlus}:</strong> ${tool.plus[lang] || tool.plus.ru}</div>
-                <div class="tool-meta"><strong>${dict.toolLabelMinus}:</strong> ${tool.minus[lang] || tool.minus.ru}</div>
-                <div class="tool-tags">
-                    ${tagsHtml}
-                </div>
-                <div class="tool-footer">
-                    <span class="price-pill">${tool.price[lang] || tool.price.ru}</span>
-                    <a class="btn-mini" href="${tool.url}" target="_blank" rel="noopener noreferrer">
-                        ${dict.toolBtnOpen}
-                    </a>
-                </div>
-            `;
+// если у инструмента есть youtube — логотип кликабельный
+const hasVideo = !!tool.youtube;
+
+const logoInner = tool.logoType === "image"
+    ? `<img src="${tool.logoSrc}" style="width:100%;height:100%;object-fit:contain;">`
+    : logoLetters;
+
+const logoWrapper = hasVideo
+    ? `<div class="tool-logo" onclick="openVideo('${tool.id}')" style="cursor:pointer;" title="Открыть видео по инструменту">
+           ${logoInner}
+       </div>`
+    : `<div class="tool-logo">
+           ${logoInner}
+       </div>`;
+
+card.innerHTML = `
+    <div class="tool-top">
+        ${logoWrapper}
+        <div>
+            <div class="tool-name">${tool.name[lang] || tool.name.ru}</div>
+            <div class="tool-meta">${tool.short[lang] || tool.short.ru}</div>
+        </div>
+    </div>
+    <div class="tool-meta" style="margin-top:4px;">
+        <strong>${dict.toolLabelFor}:</strong> ${tool.useFor[lang] || tool.useFor.ru}
+    </div>
+    <div class="tool-meta"><strong>${dict.toolLabelPlus}:</strong> ${tool.plus[lang] || tool.plus.ru}</div>
+    <div class="tool-meta"><strong>${dict.toolLabelMinus}:</strong> ${tool.minus[lang] || tool.minus.ru}</div>
+    <div class="tool-tags">
+        ${tagsHtml}
+    </div>
+    <div class="tool-footer">
+        <span class="price-pill">${tool.price[lang] || tool.price.ru}</span>
+        <a class="btn-mini" href="${tool.url}" target="_blank" rel="noopener noreferrer">
+            ${dict.toolBtnOpen}
+        </a>
+    </div>
+`;
 
             toolsGrid.appendChild(card);
         });
@@ -1909,10 +2016,26 @@
 
     toolsInitialized = true;
     renderTools();
-</script>
+</script> 
+
+    <div id="videoModal" class="video-modal">
+    <div class="video-modal-content">
+        <button class="video-modal-close" onclick="closeVideo()">×</button>
+        <div class="video-modal-inner">
+            <iframe
+                id="videoFrame"
+                src=""
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+</div>
+    
 </body>
 
 </html>
+
 
 
 
