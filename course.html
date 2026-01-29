@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Курс: Знакомство с ИИ</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial; margin:20px; background:#f6f8ff;}
+    .card{background:#fff;border:1px solid #dbe3ff;border-radius:12px;padding:14px;margin:10px 0;}
+    .row{display:flex; justify-content:space-between; gap:12px; align-items:center;}
+    .lock{opacity:.55}
+    button{border:1px solid #dbe3ff;border-radius:999px;padding:8px 12px;background:#2563eb;color:#fff;cursor:pointer}
+    button[disabled]{background:#9aa7d8;cursor:not-allowed}
+    .tag{font-size:12px;color:#555}
+    input{padding:10px;border:1px solid #dbe3ff;border-radius:10px;width:260px}
+  </style>
+</head>
+<body>
+
+<h2>Знакомство с ИИ — уроки</h2>
+<div id="lessons"></div>
+
+<div class="card" id="codeBox" style="display:none;">
+  <div class="tag">После 3-го урока нужен код доступа</div>
+  <div class="row" style="justify-content:flex-start;">
+    <input id="codeInput" placeholder="Введите код" />
+    <button id="codeBtn">Активировать</button>
+  </div>
+  <div id="codeMsg" class="tag"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+  // ВАШ firebaseConfig
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1CMBQFz_okNdQJZDafIFFdYZJoVAXBWA",
+    authDomain: "ai-course-lms.firebaseapp.com",
+    projectId: "ai-course-lms",
+    storageBucket: "ai-course-lms.firebasestorage.app",
+    messagingSenderId: "930455880760",
+    appId: "1:930455880760:web:980c6188eb533b36ce52cd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Для теста — анонимный вход (включите Anonymous в Authentication)
+  const userCred = await signInAnonymously(auth);
+  const uid = userCred.user.uid;
+
+  const courseId = "intro-ai";
+
+  // Прогресс пользователя (упрощённо: только codeActivated)
+  const enrollRef = doc(db, "enrollments", `${courseId}_${uid}`);
+  const enrollSnap = await getDoc(enrollRef);
+  if (!enrollSnap.exists()) {
+    await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
+  }
+
+  async function loadEnroll() {
+    const s = await getDoc(enrollRef);
+    return s.data();
+  }
+
+  async function loadLessons() {
+    const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  function lessonCard(lesson, canOpen) {
+    const locked = !canOpen;
+    const div = document.createElement("div");
+    div.className = "card" + (locked ? " lock" : "");
+    div.innerHTML = `
+      <div class="row">
+        <div>
+          <div><b>${lesson.title}</b></div>
+          <div class="tag">Урок №${lesson.order} ${lesson.requiresCode ? "· нужен код" : ""}</div>
+        </div>
+        <button ${locked ? "disabled" : ""}>Открыть</button>
+      </div>
+    `;
+    div.querySelector("button").addEventListener("click", () => {
+      window.location.href = lesson.contentUrl;
+    });
+    return div;
+  }
+
+  async function render() {
+    const [lessons, enroll] = await Promise.all([loadLessons(), loadEnroll()]);
+    const box = document.getElementById("lessons");
+    box.innerHTML = "";
+
+    for (const lesson of lessons) {
+      const canOpen = !lesson.requiresCode || enroll.codeActivated === true;
+      box.appendChild(lessonCard(lesson, canOpen));
+    }
+
+    const hasLocked = lessons.some(l => l.requiresCode);
+    document.getElementById("codeBox").style.display = hasLocked ? "block" : "none";
+  }
+
+  document.getElementById("codeBtn").addEventListener("click", async () => {
+    const code = document.getElementById("codeInput").value.trim();
+    const msg = document.getElementById("codeMsg");
+    if (!code) { msg.textContent = "Введите код"; return; }
+
+    // Упрощение: пока любой код открывает доступ.
+    await setDoc(enrollRef, { codeActivated: true }, { merge: true });
+    msg.textContent = "Код принят. Доступ открыт.";
+    await render();
+  });
+
+  await render();
+</script>
+
+</body>
+</html>
