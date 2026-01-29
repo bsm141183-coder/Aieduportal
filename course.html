@@ -5,36 +5,61 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Курс: Знакомство с ИИ</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Arial; margin:20px; background:#f6f8ff;}
-    .card{background:#fff;border:1px solid #dbe3ff;border-radius:12px;padding:14px;margin:10px 0;}
+    :root { --b:#dbe3ff; --bg:#f6f8ff; --btn:#2563eb; --mut:#667085; }
+    body{font-family:system-ui,Segoe UI,Arial; margin:20px; background:var(--bg);}
+    h1{font-size:28px; margin:0 0 14px;}
+    .wrap{max-width:820px;}
+    .card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px;margin:10px 0;}
     .row{display:flex; justify-content:space-between; gap:12px; align-items:center;}
+    .title{font-weight:700;}
+    .tag{font-size:12px;color:var(--mut); margin-top:4px;}
     .lock{opacity:.55}
-    button{border:1px solid #dbe3ff;border-radius:999px;padding:8px 12px;background:#2563eb;color:#fff;cursor:pointer}
+    button{border:1px solid var(--b);border-radius:999px;padding:8px 12px;background:var(--btn);color:#fff;cursor:pointer}
     button[disabled]{background:#9aa7d8;cursor:not-allowed}
-    .tag{font-size:12px;color:#555}
-    input{padding:10px;border:1px solid #dbe3ff;border-radius:10px;width:260px}
+    input{padding:10px;border:1px solid var(--b);border-radius:10px;width:260px}
+    .error{color:#b42318}
+    .ok{color:#027a48}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+    .small{font-size:12px;color:var(--mut)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Знакомство с ИИ — уроки</h1>
+      <div class="small">Курс: <span class="mono">intro-ai</span></div>
+    </div>
 
-<h2>Знакомство с ИИ — уроки</h2>
-<div id="lessons"></div>
+    <div id="status" class="small">Подключение...</div>
 
-<div class="card" id="codeBox" style="display:none;">
-  <div class="tag">После 3-го урока нужен код доступа</div>
-  <div class="row" style="justify-content:flex-start;">
-    <input id="codeInput" placeholder="Введите код" />
-    <button id="codeBtn">Активировать</button>
+    <div id="lessons"></div>
+
+    <div class="card" id="codeBox" style="display:none;">
+      <div class="tag">Для закрытых уроков нужен код доступа (после 3-го урока)</div>
+      <div class="row" style="justify-content:flex-start;">
+        <input id="codeInput" placeholder="Введите код" />
+        <button id="codeBtn">Активировать</button>
+      </div>
+      <div id="codeMsg" class="tag"></div>
+    </div>
+
+    <div class="card" id="debugBox" style="display:none;">
+      <div class="tag"><b>Ошибка</b> (скопируйте и пришлите мне, если снова пусто)</div>
+      <pre id="debug" class="mono" style="white-space:pre-wrap;margin:8px 0 0;"></pre>
+    </div>
   </div>
-  <div id="codeMsg" class="tag"></div>
-</div>
 
 <script type="module">
+  // Firebase SDK (CDN)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import {
+    getFirestore, collection, getDocs, query, orderBy,
+    doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-  // ВАШ firebaseConfig
+  // Ваш firebaseConfig
   const firebaseConfig = {
     apiKey: "AIzaSyA1CMBQFz_okNdQJZDafIFFdYZJoVAXBWA",
     authDomain: "ai-course-lms.firebaseapp.com",
@@ -44,32 +69,21 @@
     appId: "1:930455880760:web:980c6188eb533b36ce52cd"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  // Для теста — анонимный вход (включите Anonymous в Authentication)
-  const userCred = await signInAnonymously(auth);
-  const uid = userCred.user.uid;
-
   const courseId = "intro-ai";
 
-  // Прогресс пользователя (упрощённо: только codeActivated)
-  const enrollRef = doc(db, "enrollments", `${courseId}_${uid}`);
-  const enrollSnap = await getDoc(enrollRef);
-  if (!enrollSnap.exists()) {
-    await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
-  }
+  const statusEl = document.getElementById("status");
+  const lessonsEl = document.getElementById("lessons");
+  const codeBox = document.getElementById("codeBox");
+  const codeInput = document.getElementById("codeInput");
+  const codeBtn = document.getElementById("codeBtn");
+  const codeMsg = document.getElementById("codeMsg");
+  const debugBox = document.getElementById("debugBox");
+  const debugEl = document.getElementById("debug");
 
-  async function loadEnroll() {
-    const s = await getDoc(enrollRef);
-    return s.data();
-  }
-
-  async function loadLessons() {
-    const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  function showError(err) {
+    debugBox.style.display = "block";
+    debugEl.textContent = String(err?.message || err || "Unknown error");
+    statusEl.innerHTML = `<span class="error">Ошибка: проверьте Console (F12) и настройки Firebase</span>`;
   }
 
   function lessonCard(lesson, canOpen) {
@@ -79,45 +93,100 @@
     div.innerHTML = `
       <div class="row">
         <div>
-          <div><b>${lesson.title}</b></div>
-          <div class="tag">Урок №${lesson.order} ${lesson.requiresCode ? "· нужен код" : ""}</div>
+          <div class="title">${lesson.title ?? ("Урок " + lesson.order)}</div>
+          <div class="tag">Урок №${lesson.order ?? "?"}
+            ${lesson.requiresCode ? " · нужен код" : ""}
+          </div>
         </div>
         <button ${locked ? "disabled" : ""}>Открыть</button>
       </div>
     `;
     div.querySelector("button").addEventListener("click", () => {
+      if (!lesson.contentUrl) return;
       window.location.href = lesson.contentUrl;
     });
     return div;
   }
 
-  async function render() {
-    const [lessons, enroll] = await Promise.all([loadLessons(), loadEnroll()]);
-    const box = document.getElementById("lessons");
-    box.innerHTML = "";
+  async function main() {
+    try {
+      // 1) Init
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
 
-    for (const lesson of lessons) {
-      const canOpen = !lesson.requiresCode || enroll.codeActivated === true;
-      box.appendChild(lessonCard(lesson, canOpen));
+      statusEl.textContent = "Вход...";
+      // 2) Anonymous auth (должен быть включен в Authentication)
+      const cred = await signInAnonymously(auth);
+      const uid = cred.user.uid;
+
+      // 3) enrollment doc
+      const enrollId = `${courseId}_${uid}`;
+      const enrollRef = doc(db, "enrollments", enrollId);
+
+      const enrollSnap = await getDoc(enrollRef);
+      if (!enrollSnap.exists()) {
+        await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
+      }
+
+      async function loadEnroll() {
+        const s = await getDoc(enrollRef);
+        return s.data() || { codeActivated: false };
+      }
+
+      // 4) Load lessons
+      statusEl.textContent = "Загрузка уроков...";
+      const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
+      const snap = await getDocs(q);
+      const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // 5) Render
+      const enroll = await loadEnroll();
+      lessonsEl.innerHTML = "";
+
+      if (!lessons.length) {
+        statusEl.innerHTML = `<span class="error">Уроки не найдены в Firestore: courses/${courseId}/lessons</span>`;
+        return;
+      }
+
+      for (const lesson of lessons) {
+        const canOpen = !lesson.requiresCode || enroll.codeActivated === true;
+        lessonsEl.appendChild(lessonCard(lesson, canOpen));
+      }
+
+      const hasLocked = lessons.some(l => l.requiresCode);
+      codeBox.style.display = hasLocked ? "block" : "none";
+      statusEl.innerHTML = `<span class="ok">Готово.</span>`;
+
+      // 6) Code activation (упрощённо: любой код активирует)
+      codeBtn.addEventListener("click", async () => {
+        codeMsg.className = "tag";
+        const code = codeInput.value.trim();
+        if (!code) {
+          codeMsg.textContent = "Введите код";
+          return;
+        }
+
+        // ВАЖНО: сейчас упрощено. Потом заменим на проверку accessCodes/{code} через Cloud Functions.
+        await setDoc(enrollRef, { codeActivated: true }, { merge: true });
+        codeMsg.className = "tag ok";
+        codeMsg.textContent = "Код принят. Доступ открыт.";
+
+        // перерисовка
+        const updated = await loadEnroll();
+        lessonsEl.innerHTML = "";
+        for (const lesson of lessons) {
+          const canOpen = !lesson.requiresCode || updated.codeActivated === true;
+          lessonsEl.appendChild(lessonCard(lesson, canOpen));
+        }
+      });
+
+    } catch (err) {
+      showError(err);
     }
-
-    const hasLocked = lessons.some(l => l.requiresCode);
-    document.getElementById("codeBox").style.display = hasLocked ? "block" : "none";
   }
 
-  document.getElementById("codeBtn").addEventListener("click", async () => {
-    const code = document.getElementById("codeInput").value.trim();
-    const msg = document.getElementById("codeMsg");
-    if (!code) { msg.textContent = "Введите код"; return; }
-
-    // Упрощение: пока любой код открывает доступ.
-    await setDoc(enrollRef, { codeActivated: true }, { merge: true });
-    msg.textContent = "Код принят. Доступ открыт.";
-    await render();
-  });
-
-  await render();
+  main();
 </script>
-
 </body>
 </html>
