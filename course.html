@@ -51,7 +51,6 @@
   </div>
 
 <script type="module">
-  // Firebase SDK (CDN)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
   import {
     getFirestore, collection, getDocs, query, orderBy,
@@ -83,7 +82,7 @@
   function showError(err) {
     debugBox.style.display = "block";
     debugEl.textContent = String(err?.message || err || "Unknown error");
-    statusEl.innerHTML = `<span class="error">Ошибка: проверьте Console (F12) и настройки Firebase</span>`;
+    statusEl.innerHTML = `<span class="error">Ошибка: проверьте настройки Firebase</span>`;
   }
 
   function lessonCard(lesson, canOpen) {
@@ -110,75 +109,63 @@
 
   async function main() {
     try {
-      // 1) Init
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const auth = getAuth(app);
 
       statusEl.textContent = "Вход...";
-      // 2) Anonymous auth (должен быть включен в Authentication)
-      const cred = await signInAnonymously(auth);
+      const cred = await signInAnonymously(auth); // требует включённый Anonymous provider
       const uid = cred.user.uid;
 
-      // 3) enrollment doc
+      // ВАЖНО: сначала создаём enrollment, потом читаем (так мы избегаем permission-ошибки на несуществующем документе)
       const enrollId = `${courseId}_${uid}`;
       const enrollRef = doc(db, "enrollments", enrollId);
 
-      const enrollSnap = await getDoc(enrollRef);
-      if (!enrollSnap.exists()) {
-        await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
-      }
+      statusEl.textContent = "Подготовка профиля...";
+      await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
 
       async function loadEnroll() {
         const s = await getDoc(enrollRef);
         return s.data() || { codeActivated: false };
       }
 
-      // 4) Load lessons
       statusEl.textContent = "Загрузка уроков...";
       const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
       const snap = await getDocs(q);
       const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // 5) Render
-      const enroll = await loadEnroll();
-      lessonsEl.innerHTML = "";
-
       if (!lessons.length) {
-        statusEl.innerHTML = `<span class="error">Уроки не найдены в Firestore: courses/${courseId}/lessons</span>`;
+        statusEl.innerHTML = `<span class="error">Уроки не найдены: courses/${courseId}/lessons</span>`;
         return;
       }
 
-      for (const lesson of lessons) {
-        const canOpen = !lesson.requiresCode || enroll.codeActivated === true;
-        lessonsEl.appendChild(lessonCard(lesson, canOpen));
+      const enroll = await loadEnroll();
+
+      function render(enrollData) {
+        lessonsEl.innerHTML = "";
+        for (const lesson of lessons) {
+          const canOpen = !lesson.requiresCode || enrollData.codeActivated === true;
+          lessonsEl.appendChild(lessonCard(lesson, canOpen));
+        }
+        const hasLocked = lessons.some(l => l.requiresCode);
+        codeBox.style.display = hasLocked ? "block" : "none";
       }
 
-      const hasLocked = lessons.some(l => l.requiresCode);
-      codeBox.style.display = hasLocked ? "block" : "none";
+      render(enroll);
       statusEl.innerHTML = `<span class="ok">Готово.</span>`;
 
-      // 6) Code activation (упрощённо: любой код активирует)
+      // Упрощённо: пока любой код открывает закрытые уроки
       codeBtn.addEventListener("click", async () => {
         codeMsg.className = "tag";
         const code = codeInput.value.trim();
-        if (!code) {
-          codeMsg.textContent = "Введите код";
-          return;
-        }
+        if (!code) { codeMsg.textContent = "Введите код"; return; }
 
-        // ВАЖНО: сейчас упрощено. Потом заменим на проверку accessCodes/{code} через Cloud Functions.
         await setDoc(enrollRef, { codeActivated: true }, { merge: true });
         codeMsg.className = "tag ok";
         codeMsg.textContent = "Код принят. Доступ открыт.";
 
-        // перерисовка
         const updated = await loadEnroll();
-        lessonsEl.innerHTML = "";
-        for (const lesson of lessons) {
-          const canOpen = !lesson.requiresCode || updated.codeActivated === true;
-          lessonsEl.appendChild(lessonCard(lesson, canOpen));
-        }
+        render(updated);
       });
 
     } catch (err) {
