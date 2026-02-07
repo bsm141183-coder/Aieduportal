@@ -17,11 +17,13 @@
     button{border:1px solid var(--b);border-radius:999px;padding:8px 12px;background:var(--btn);color:#fff;cursor:pointer}
     button[disabled]{background:#9aa7d8;cursor:not-allowed}
     input{padding:10px;border:1px solid var(--b);border-radius:10px;width:260px}
+    input:disabled{background:#eef2ff;color:#7a86b8}
     .error{color:#b42318}
     .ok{color:#027a48}
     .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
     .small{font-size:12px;color:var(--mut)}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .hint{font-size:12px;color:var(--mut);margin-top:8px}
   </style>
 </head>
 <body>
@@ -38,14 +40,15 @@
     <div class="card" id="codeBox" style="display:none;">
       <div class="tag">Для закрытых уроков нужен код доступа (после 3-го урока)</div>
       <div class="row" style="justify-content:flex-start;">
-        <input id="codeInput" placeholder="Введите код" />
+        <input id="codeInput" placeholder="Введите код" disabled />
         <button id="codeBtn">Активировать</button>
       </div>
       <div id="codeMsg" class="tag"></div>
+      <div class="hint" id="userHint"></div>
     </div>
 
     <div class="card" id="debugBox" style="display:none;">
-      <div class="tag"><b>Ошибка</b> (скопируйте и пришлите мне, если снова пусто)</div>
+      <div class="tag"><b>Ошибка</b> (скопируйте и пришлите мне)</div>
       <pre id="debug" class="mono" style="white-space:pre-wrap;margin:8px 0 0;"></pre>
     </div>
   </div>
@@ -56,9 +59,11 @@
     getFirestore, collection, getDocs, query, orderBy,
     doc, setDoc, getDoc
   } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-  // Ваш firebaseConfig
+  // ========= НАСТРОЙКИ =========
   const firebaseConfig = {
     apiKey: "AIzaSyA1CMBQFz_okNdQJZDafIFFdYZJoVAXBWA",
     authDomain: "ai-course-lms.firebaseapp.com",
@@ -70,19 +75,24 @@
 
   const courseId = "intro-ai";
 
+  // ВАЖНО: поменяй код доступа здесь
+  const ACCESS_CODE = "2222";
+  // ============================
+
   const statusEl = document.getElementById("status");
   const lessonsEl = document.getElementById("lessons");
   const codeBox = document.getElementById("codeBox");
   const codeInput = document.getElementById("codeInput");
   const codeBtn = document.getElementById("codeBtn");
   const codeMsg = document.getElementById("codeMsg");
+  const userHint = document.getElementById("userHint");
   const debugBox = document.getElementById("debugBox");
   const debugEl = document.getElementById("debug");
 
   function showError(err) {
     debugBox.style.display = "block";
     debugEl.textContent = String(err?.message || err || "Unknown error");
-    statusEl.innerHTML = `<span class="error">Ошибка: проверьте настройки Firebase</span>`;
+    statusEl.innerHTML = `<span class="error">Ошибка: проверьте настройки Firebase/Rules</span>`;
   }
 
   function lessonCard(lesson, canOpen) {
@@ -113,23 +123,9 @@
       const db = getFirestore(app);
       const auth = getAuth(app);
 
-      statusEl.textContent = "Вход...";
-      const cred = await signInAnonymously(auth); // требует включённый Anonymous provider
-      const uid = cred.user.uid;
-
-      // ВАЖНО: сначала создаём enrollment, потом читаем (так мы избегаем permission-ошибки на несуществующем документе)
-      const enrollId = `${courseId}_${uid}`;
-      const enrollRef = doc(db, "enrollments", enrollId);
-
-      statusEl.textContent = "Подготовка профиля...";
-      await setDoc(enrollRef, { uid, courseId, codeActivated: false }, { merge: true });
-
-      async function loadEnroll() {
-        const s = await getDoc(enrollRef);
-        return s.data() || { codeActivated: false };
-      }
-
       statusEl.textContent = "Загрузка уроков...";
+
+      // 1) Загружаем уроки (чтение должно быть разрешено rules)
       const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
       const snap = await getDocs(q);
       const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -139,34 +135,132 @@
         return;
       }
 
-      const enroll = await loadEnroll();
+      const hasLocked = lessons.some(l => l.requiresCode);
+      codeBox.style.display = hasLocked ? "block" : "none";
 
-      function render(enrollData) {
+      let currentUser = null;
+      let codeActivated = false;
+
+      function render() {
         lessonsEl.innerHTML = "";
         for (const lesson of lessons) {
-          const canOpen = !lesson.requiresCode || enrollData.codeActivated === true;
+          const canOpen = !lesson.requiresCode || codeActivated === true;
           lessonsEl.appendChild(lessonCard(lesson, canOpen));
         }
-        const hasLocked = lessons.some(l => l.requiresCode);
-        codeBox.style.display = hasLocked ? "block" : "none";
+
+        if (!hasLocked) return;
+
+        if (!currentUser) {
+          // не вошёл
+          codeInput.disabled = true;
+          codeBtn.textContent = "Активировать";
+          userHint.innerHTML = `<span class="tag">Сначала нажмите «Активировать» и войдите через Google.</span>`;
+        } else {
+          // вошёл
+          codeInput.disabled = false;
+          codeBtn.textContent = "Активировать";
+          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Теперь введите код.</span>`;
+        }
       }
 
-      render(enroll);
-      statusEl.innerHTML = `<span class="ok">Готово.</span>`;
+      async function loadEnroll(uid) {
+        const enrollId = `${courseId}_${uid}`;
+        const enrollRef = doc(db, "enrollments", enrollId);
+        const s = await getDoc(enrollRef);
+        return { ref: enrollRef, data: s.exists() ? s.data() : null };
+      }
 
-      // Упрощённо: пока любой код открывает закрытые уроки
-      codeBtn.addEventListener("click", async () => {
-        codeMsg.className = "tag";
-        const code = codeInput.value.trim();
-        if (!code) { codeMsg.textContent = "Введите код"; return; }
+      // 2) Следим за авторизацией (Google)
+      onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
 
-        await setDoc(enrollRef, { codeActivated: true }, { merge: true });
-        codeMsg.className = "tag ok";
-        codeMsg.textContent = "Код принят. Доступ открыт.";
+        if (user) {
+          statusEl.innerHTML = `<span class="ok">Готово.</span>`;
+          try {
+            const enroll = await loadEnroll(user.uid);
+            codeActivated = enroll.data?.codeActivated === true;
+            if (codeActivated) {
+              codeMsg.className = "tag ok";
+              codeMsg.textContent = "Доступ уже открыт.";
+            } else {
+              codeMsg.className = "tag";
+              codeMsg.textContent = "";
+            }
+          } catch (e) {
+            // если rules запрещают чтение enrollments — просто не падаем
+            codeActivated = false;
+          }
+        } else {
+          statusEl.innerHTML = `<span class="ok">Готово.</span>`;
+          codeActivated = false;
+          codeMsg.className = "tag";
+          codeMsg.textContent = "";
+        }
 
-        const updated = await loadEnroll();
-        render(updated);
+        render();
       });
+
+      // 3) Кнопка: сначала Google-вход, потом проверка кода и выдача роли listener
+      codeBtn.addEventListener("click", async () => {
+        try {
+          codeMsg.className = "tag";
+          codeMsg.textContent = "";
+
+          // A) Если не вошли — открываем Google popup
+          if (!auth.currentUser) {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+
+            // после входа onAuthStateChanged всё обновит
+            codeMsg.className = "tag ok";
+            codeMsg.textContent = "Вход выполнен. Теперь введите код.";
+            return;
+          }
+
+          // B) Уже вошли — проверяем код
+          const code = codeInput.value.trim();
+          if (!code) { codeMsg.textContent = "Введите код"; return; }
+          if (code !== ACCESS_CODE) { codeMsg.textContent = "Неверный код"; return; }
+
+          const user = auth.currentUser;
+          const uid = user.uid;
+
+          // C) Пишем роль listener
+          await setDoc(doc(db, "users", uid), {
+            uid,
+            email: user.email ?? null,
+            name: user.displayName ?? null,
+            role: "listener",
+            provider: "google",
+            createdAt: new Date()
+          }, { merge: true });
+
+          // D) Открываем доступ к закрытым урокам
+          const enrollId = `${courseId}_${uid}`;
+          const enrollRef = doc(db, "enrollments", enrollId);
+
+          await setDoc(enrollRef, {
+            uid,
+            courseId,
+            codeActivated: true,
+            activatedAt: new Date()
+          }, { merge: true });
+
+          codeActivated = true;
+          codeMsg.className = "tag ok";
+          codeMsg.textContent = "Код принят. Доступ открыт.";
+          render();
+
+        } catch (err) {
+          // частая причина: pop-up blocked
+          codeMsg.className = "tag error";
+          codeMsg.textContent = "Ошибка. Проверьте, что браузер разрешил всплывающие окна (pop-up) для сайта.";
+          console.error(err);
+        }
+      });
+
+      // первичный рендер (до авторизации)
+      render();
 
     } catch (err) {
       showError(err);
