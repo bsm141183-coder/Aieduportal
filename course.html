@@ -35,7 +35,6 @@
     </div>
 
     <div id="status" class="small">Подключение...</div>
-
     <div id="lessons"></div>
 
     <div class="card" id="codeBox" style="display:none;">
@@ -50,7 +49,7 @@
     </div>
 
     <div class="card" id="debugBox" style="display:none;">
-      <div class="tag"><b>Ошибка</b> (скопируйте и пришлите мне)</div>
+      <div class="tag"><b>Ошибка</b> (скопируйте и пришлите)</div>
       <pre id="debug" class="mono" style="white-space:pre-wrap;margin:8px 0 0;"></pre>
     </div>
   </div>
@@ -58,14 +57,13 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
   import {
-    getFirestore, collection, getDocs, query, orderBy,
-    doc, setDoc
+    getFirestore, collection, getDocs, query, orderBy, doc, setDoc
   } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
   import {
     getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
   } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-  // ========= НАСТРОЙКИ =========
+  // ===== НАСТРОЙКИ FIREBASE =====
   const firebaseConfig = {
     apiKey: "AIzaSyA1CMBQFz_okNdQJZDafIFFdYZJoVAXBWA",
     authDomain: "ai-course-lms.firebaseapp.com",
@@ -77,9 +75,8 @@
 
   const courseId = "intro-ai";
 
-  // ВАЖНО: это URL НОВОГО развертывания Apps Script (web app). Если ты перезадеплоишь скрипт — обнови ссылку тут.
-  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxEPyg973RnS50nsXbrRJJGFpE8SMe4SNw_aOI_0VUROuOez0fa7wAuSKOQvJl6ubTeFA/exec";
-  // ============================
+  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxECp2HTwdx5ty9u7kIVGYezCEKgzn_t13b1sekACokACGtY1EpsZ1m4GowZjfqIL-s5w/exec";
+ 
 
   const statusEl = document.getElementById("status");
   const lessonsEl = document.getElementById("lessons");
@@ -95,7 +92,7 @@
   function showError(err) {
     debugBox.style.display = "block";
     debugEl.textContent = String(err?.message || err || "Unknown error");
-    statusEl.innerHTML = `<span class="error">Ошибка: проверьте настройки Firebase/Rules</span>`;
+    statusEl.innerHTML = `<span class="error">Ошибка: проверьте Firebase/Rules</span>`;
   }
 
   function lessonCard(lesson, canOpen) {
@@ -106,9 +103,7 @@
       <div class="row">
         <div>
           <div class="title">${lesson.title ?? ("Урок " + lesson.order)}</div>
-          <div class="tag">Урок №${lesson.order ?? "?"}
-            ${lesson.requiresCode ? " · нужен код" : ""}
-          </div>
+          <div class="tag">Урок №${lesson.order ?? "?"}${lesson.requiresCode ? " · нужен код" : ""}</div>
         </div>
         <button ${locked ? "disabled" : ""}>Открыть</button>
       </div>
@@ -121,8 +116,6 @@
   }
 
   async function postToMailWebApp(url, payload) {
-    // Важно: если Apps Script не настроен на CORS, браузер покажет Failed to fetch.
-    // Поэтому мы делаем mode:"cors" и проверяем resp.ok
     const resp = await fetch(url, {
       method: "POST",
       mode: "cors",
@@ -134,20 +127,22 @@
       const txt = await resp.text().catch(() => "");
       throw new Error("Apps Script вернул " + resp.status + (txt ? (": " + txt) : ""));
     }
-
-    // Если вернулся JSON — ок, но нам достаточно что ok
     return true;
   }
 
   async function main() {
     try {
+      if (!MAIL_WEBAPP_URL || MAIL_WEBAPP_URL.includes("PASTE_YOUR_NEW_APPS_SCRIPT_EXEC_URL_HERE")) {
+        statusEl.innerHTML = `<span class="error">Не задан MAIL_WEBAPP_URL. Вставьте ссылку /exec из Apps Script deployment.</span>`;
+        return;
+      }
+
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const auth = getAuth(app);
 
       statusEl.textContent = "Загрузка уроков...";
 
-      // 1) Загружаем уроки
       const q = query(collection(db, "courses", courseId, "lessons"), orderBy("order"));
       const snap = await getDocs(q);
       const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -164,24 +159,23 @@
 
       function render() {
         lessonsEl.innerHTML = "";
-
-        // Закрытые уроки НЕ открываем автоматически (ждём оплаты/кода вручную)
         for (const lesson of lessons) {
+          // Закрытые уроки не открываем (ждём оплаты/кода вручную)
           const canOpen = !lesson.requiresCode;
           lessonsEl.appendChild(lessonCard(lesson, canOpen));
         }
 
         if (!hasLocked) return;
 
-        // Поле кода всегда серое
+        // Поле кода всегда серое (ввод только после оплаты вручную админом)
         codeInput.disabled = true;
 
         if (!currentUser) {
           logoutBtn.style.display = "none";
-          userHint.innerHTML = `<span class="tag">Нажмите «Активировать», войдите через Google — заявка на оплату уйдёт администратору.</span>`;
+          userHint.innerHTML = `<span class="tag">Нажмите «Активировать», войдите через Google — заявка уйдёт администратору.</span>`;
         } else {
           logoutBtn.style.display = "inline-block";
-          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Нажмите «Активировать», чтобы отправить заявку (если ещё не отправляли).</span>`;
+          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Нажмите «Активировать», чтобы отправить заявку.</span>`;
         }
       }
 
@@ -192,13 +186,9 @@
       });
 
       logoutBtn.addEventListener("click", async () => {
-        try {
-          await signOut(auth);
-          codeMsg.className = "tag";
-          codeMsg.textContent = "";
-        } catch (e) {
-          // ignore
-        }
+        try { await signOut(auth); } catch (e) {}
+        codeMsg.className = "tag";
+        codeMsg.textContent = "";
       });
 
       codeBtn.addEventListener("click", async () => {
@@ -206,7 +196,6 @@
           codeMsg.className = "tag";
           codeMsg.textContent = "";
 
-          // 1) Вход через Google (если ещё не вошёл)
           if (!auth.currentUser) {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
@@ -221,7 +210,7 @@
 
           const uid = user.uid;
 
-          // 2) Роль listener в Firestore
+          // 1) записываем роль listener
           await setDoc(doc(db, "users", uid), {
             uid,
             email: user.email ?? null,
@@ -231,7 +220,7 @@
             createdAt: new Date()
           }, { merge: true });
 
-          // 3) Отправка письма админу через Apps Script
+          // 2) отправляем заявку на почту админу
           await postToMailWebApp(MAIL_WEBAPP_URL, {
             courseId,
             uid,
@@ -240,8 +229,7 @@
           });
 
           codeMsg.className = "tag ok";
-          codeMsg.textContent = "Заявка отправлена администратору. Ожидайте ответ и код после оплаты.";
-
+          codeMsg.textContent = "Заявка отправлена администратору. Ожидайте код после оплаты.";
           render();
 
         } catch (err) {
@@ -252,6 +240,7 @@
       });
 
       render();
+
     } catch (err) {
       showError(err);
     }
