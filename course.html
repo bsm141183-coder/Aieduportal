@@ -59,7 +59,7 @@
   import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-  // ===== НАСТРОЙКИ FIREBASE =====
+  // ===== FIREBASE CONFIG =====
   const firebaseConfig = {
     apiKey: "AIzaSyA1CMBQFz_okNdQJZDafIFFdYZJoVAXBWA",
     authDomain: "ai-course-lms.firebaseapp.com",
@@ -71,9 +71,8 @@
 
   const courseId = "intro-ai";
 
-  // ВАЖНО: WebApp Apps Script должен быть опубликован как Web app:
-  // Execute as: Me, Who has access: Anyone, и ссылка вида .../exec
-  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwMOcOe1AJ4G7HVnEz3IJJUaNZkBr7Bc2vLVUqtQgONVMo7blXrVoO2cUxV0rcIRv_AYQ/exec";
+  // Вставьте сюда ВАШ актуальный /exec после Deploy -> New version
+  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/PASTE_YOUR_EXEC_URL/exec";
 
   const statusEl = document.getElementById("status");
   const lessonsEl = document.getElementById("lessons");
@@ -112,30 +111,31 @@
     return div;
   }
 
-  // === FIX: отправка в Apps Script без preflight (Content-Type text/plain)
+  // отправка без CORS-проблем (без preflight)
   async function postToMailWebApp(url, payload) {
-    // 1) Пытаемся нормальным CORS-режимом без preflight
+    const body = JSON.stringify(payload);
+
+    // основной вариант (CORS)
     try {
       const resp = await fetch(url, {
         method: "POST",
         mode: "cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
+        body
       });
 
-      // если ответ читается и он плохой — покажем
       if (resp.type !== "opaque" && !resp.ok) {
         const txt = await resp.text().catch(() => "");
         throw new Error("Apps Script вернул " + resp.status + (txt ? (": " + txt) : ""));
       }
       return true;
     } catch (e) {
-      // 2) Fallback: no-cors (ответ не читается, но запрос обычно проходит)
+      // fallback no-cors (без проверки ответа)
       await fetch(url, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
+        body
       });
       return true;
     }
@@ -143,7 +143,7 @@
 
   async function main() {
     try {
-      if (!MAIL_WEBAPP_URL || MAIL_WEBAPP_URL.includes("PASTE_YOUR_NEW_APPS_SCRIPT_EXEC_URL_HERE")) {
+      if (!MAIL_WEBAPP_URL || MAIL_WEBAPP_URL.includes("PASTE_YOUR_EXEC_URL")) {
         statusEl.innerHTML = `<span class="error">Не задан MAIL_WEBAPP_URL. Вставьте ссылку /exec из Apps Script deployment.</span>`;
         return;
       }
@@ -171,22 +171,20 @@
       function render() {
         lessonsEl.innerHTML = "";
         for (const lesson of lessons) {
-          // Закрытые уроки не открываем (ждём кода вручную)
           const canOpen = !lesson.requiresCode;
           lessonsEl.appendChild(lessonCard(lesson, canOpen));
         }
 
         if (!hasLocked) return;
 
-        // Поле кода всегда серое
         codeInput.disabled = true;
 
         if (!currentUser) {
           logoutBtn.style.display = "none";
-          userHint.innerHTML = `<span class="tag">Нажмите «Активировать», войдите через Google — заявка уйдёт администратору.</span>`;
+          userHint.innerHTML = `<span class="tag">Нажмите «Активировать», войдите через Google — письмо уйдёт на вашу почту.</span>`;
         } else {
           logoutBtn.style.display = "inline-block";
-          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Нажмите «Активировать», чтобы отправить заявку.</span>`;
+          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Нажмите «Активировать», чтобы получить письмо.</span>`;
         }
       }
 
@@ -221,7 +219,6 @@
 
           const uid = user.uid;
 
-          // 1) записываем роль listener
           await setDoc(doc(db, "users", uid), {
             uid,
             email: user.email ?? null,
@@ -231,7 +228,6 @@
             createdAt: new Date()
           }, { merge: true });
 
-          // 2) отправляем заявку админу (Apps Script)
           await postToMailWebApp(MAIL_WEBAPP_URL, {
             courseId,
             uid,
@@ -240,12 +236,12 @@
           });
 
           codeMsg.className = "tag ok";
-          codeMsg.textContent = "Заявка отправлена администратору. Ожидайте код после оплаты.";
-          render();
+          codeMsg.textContent = "Письмо отправлено на вашу почту. Проверьте «Входящие/Спам».";
 
+          render();
         } catch (err) {
           codeMsg.className = "tag error";
-          codeMsg.textContent = "Ошибка отправки заявки: " + (err?.message || err);
+          codeMsg.textContent = "Ошибка отправки: " + (err?.message || err);
           console.error(err);
         }
       });
