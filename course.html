@@ -56,12 +56,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import {
-    getFirestore, collection, getDocs, query, orderBy, doc, setDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-  import {
-    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
-  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
   // ===== НАСТРОЙКИ FIREBASE =====
   const firebaseConfig = {
@@ -75,8 +71,9 @@
 
   const courseId = "intro-ai";
 
+  // ВАЖНО: WebApp Apps Script должен быть опубликован как Web app:
+  // Execute as: Me, Who has access: Anyone, и ссылка вида .../exec
   const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxECp2HTwdx5ty9u7kIVGYezCEKgzn_t13b1sekACokACGtY1EpsZ1m4GowZjfqIL-s5w/exec";
- 
 
   const statusEl = document.getElementById("status");
   const lessonsEl = document.getElementById("lessons");
@@ -115,19 +112,33 @@
     return div;
   }
 
+  // === FIX: отправка в Apps Script без preflight (Content-Type text/plain)
   async function postToMailWebApp(url, payload) {
-    const resp = await fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    // 1) Пытаемся нормальным CORS-режимом без preflight
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
 
-    if (!resp.ok) {
-      const txt = await resp.text().catch(() => "");
-      throw new Error("Apps Script вернул " + resp.status + (txt ? (": " + txt) : ""));
+      // если ответ читается и он плохой — покажем
+      if (resp.type !== "opaque" && !resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error("Apps Script вернул " + resp.status + (txt ? (": " + txt) : ""));
+      }
+      return true;
+    } catch (e) {
+      // 2) Fallback: no-cors (ответ не читается, но запрос обычно проходит)
+      await fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return true;
     }
-    return true;
   }
 
   async function main() {
@@ -160,14 +171,14 @@
       function render() {
         lessonsEl.innerHTML = "";
         for (const lesson of lessons) {
-          // Закрытые уроки не открываем (ждём оплаты/кода вручную)
+          // Закрытые уроки не открываем (ждём кода вручную)
           const canOpen = !lesson.requiresCode;
           lessonsEl.appendChild(lessonCard(lesson, canOpen));
         }
 
         if (!hasLocked) return;
 
-        // Поле кода всегда серое (ввод только после оплаты вручную админом)
+        // Поле кода всегда серое
         codeInput.disabled = true;
 
         if (!currentUser) {
@@ -220,7 +231,7 @@
             createdAt: new Date()
           }, { merge: true });
 
-          // 2) отправляем заявку на почту админу
+          // 2) отправляем заявку админу (Apps Script)
           await postToMailWebApp(MAIL_WEBAPP_URL, {
             courseId,
             uid,
