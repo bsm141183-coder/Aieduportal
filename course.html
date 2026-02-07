@@ -40,7 +40,7 @@
     <div class="card" id="codeBox" style="display:none;">
       <div class="tag">Для закрытых уроков нужен код доступа (после 3-го урока)</div>
       <div class="row" style="justify-content:flex-start;">
-        <input id="codeInput" placeholder="Введите код" disabled />
+        <input id="codeInput" placeholder="Введите код (например CODE1234)" disabled />
         <button id="codeBtn">Активировать</button>
         <button id="logoutBtn" class="btn-secondary" style="display:none;">Выйти</button>
       </div>
@@ -56,8 +56,13 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs, query, orderBy,
+    doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
   // ===== FIREBASE CONFIG =====
   const firebaseConfig = {
@@ -71,8 +76,8 @@
 
   const courseId = "intro-ai";
 
-  // Вставьте сюда ВАШ актуальный /exec после Deploy -> New version
-  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwMOcOe1AJ4G7HVnEz3IJJUaNZkBr7Bc2vLVUqtQgONVMo7blXrVoO2cUxV0rcIRv_AYQ/exec ";
+  // ВАЖНО: убрал пробел в конце URL
+  const MAIL_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwMOcOe1AJ4G7HVnEz3IJJUaNZkBr7Bc2vLVUqtQgONVMo7blXrVoO2cUxV0rcIRv_AYQ/exec";
 
   const statusEl = document.getElementById("status");
   const lessonsEl = document.getElementById("lessons");
@@ -111,11 +116,8 @@
     return div;
   }
 
-  // отправка без CORS-проблем (без preflight)
   async function postToMailWebApp(url, payload) {
     const body = JSON.stringify(payload);
-
-    // основной вариант (CORS)
     try {
       const resp = await fetch(url, {
         method: "POST",
@@ -123,14 +125,12 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body
       });
-
       if (resp.type !== "opaque" && !resp.ok) {
         const txt = await resp.text().catch(() => "");
         throw new Error("Apps Script вернул " + resp.status + (txt ? (": " + txt) : ""));
       }
       return true;
     } catch (e) {
-      // fallback no-cors (без проверки ответа)
       await fetch(url, {
         method: "POST",
         mode: "no-cors",
@@ -141,13 +141,34 @@
     }
   }
 
+  // ==== ЛОГИКА КОДОВ ДОСТУПА ====
+  // codes лежат тут: courses/{courseId}/accessCodes/{CODE}
+  // user unlock хранится тут: users/{uid} поле unlockedFromOrder
+  async function activateAccessCode(db, uid, codeRaw) {
+    const code = String(codeRaw || "").trim();
+    if (!code) throw new Error("Введите код.");
+
+    const codeRef = doc(db, "courses", courseId, "accessCodes", code);
+    const codeSnap = await getDoc(codeRef);
+
+    if (!codeSnap.exists()) throw new Error("Код не найден.");
+    const c = codeSnap.data();
+
+    if (!c.active) throw new Error("Код не активен.");
+
+    const unlockedFromOrder = Number(c.unlockedFromOrder || 4);
+
+    // запишем пользователю доступ
+    await setDoc(doc(db, "users", uid), {
+      unlockedFromOrder,
+      unlockedAt: new Date()
+    }, { merge: true });
+
+    return unlockedFromOrder;
+  }
+
   async function main() {
     try {
-      if (!MAIL_WEBAPP_URL || MAIL_WEBAPP_URL.includes("PASTE_YOUR_EXEC_URL")) {
-        statusEl.innerHTML = `<span class="error">Не задан MAIL_WEBAPP_URL. Вставьте ссылку /exec из Apps Script deployment.</span>`;
-        return;
-      }
-
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const auth = getAuth(app);
@@ -167,29 +188,50 @@
       codeBox.style.display = hasLocked ? "block" : "none";
 
       let currentUser = null;
+      let unlockedFromOrder = 0;
+
+      async function loadUserUnlock(uid) {
+        const uSnap = await getDoc(doc(db, "users", uid));
+        if (!uSnap.exists()) return 0;
+        const u = uSnap.data();
+        return Number(u.unlockedFromOrder || 0);
+      }
 
       function render() {
         lessonsEl.innerHTML = "";
+
         for (const lesson of lessons) {
-          const canOpen = !lesson.requiresCode;
+          const order = Number(lesson.order || 0);
+
+          // открыто если:
+          // - урок не требует код
+          // - или у пользователя unlockedFromOrder >= order
+          const canOpen = !lesson.requiresCode || (unlockedFromOrder && order >= 1 && order >= unlockedFromOrder ? true : (unlockedFromOrder >= order));
+
           lessonsEl.appendChild(lessonCard(lesson, canOpen));
         }
 
         if (!hasLocked) return;
 
-        codeInput.disabled = true;
-
         if (!currentUser) {
           logoutBtn.style.display = "none";
-          userHint.innerHTML = `<span class="tag">Нажмите «Активировать», войдите через Google — письмо уйдёт на вашу почту.</span>`;
+          codeInput.disabled = true;
+          userHint.innerHTML = `<span class="tag">Войдите через Google и нажмите «Активировать» для заявки или введите код и активируйте.</span>`;
         } else {
           logoutBtn.style.display = "inline-block";
-          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. Нажмите «Активировать», чтобы получить письмо.</span>`;
+          codeInput.disabled = false;
+          const unlockedText = unlockedFromOrder ? `Доступ открыт с урока №${unlockedFromOrder}.` : `Доступ к урокам 4+ пока закрыт.`;
+          userHint.innerHTML = `<span class="tag">Вы вошли как: <b>${currentUser.email ?? "Google user"}</b>. ${unlockedText}</span>`;
         }
       }
 
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(auth, async (user) => {
         currentUser = user;
+        if (user) {
+          unlockedFromOrder = await loadUserUnlock(user.uid);
+        } else {
+          unlockedFromOrder = 0;
+        }
         statusEl.innerHTML = `<span class="ok">Готово.</span>`;
         render();
       });
@@ -198,6 +240,7 @@
         try { await signOut(auth); } catch (e) {}
         codeMsg.className = "tag";
         codeMsg.textContent = "";
+        codeInput.value = "";
       });
 
       codeBtn.addEventListener("click", async () => {
@@ -205,6 +248,7 @@
           codeMsg.className = "tag";
           codeMsg.textContent = "";
 
+          // вход
           if (!auth.currentUser) {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
@@ -219,6 +263,7 @@
 
           const uid = user.uid;
 
+          // всегда пишем пользователя
           await setDoc(doc(db, "users", uid), {
             uid,
             email: user.email ?? null,
@@ -228,6 +273,20 @@
             createdAt: new Date()
           }, { merge: true });
 
+          const enteredCode = codeInput.value.trim();
+
+          if (enteredCode) {
+            // ==== АКТИВАЦИЯ КОДА ====
+            const u = await activateAccessCode(db, uid, enteredCode);
+            unlockedFromOrder = u;
+
+            codeMsg.className = "tag ok";
+            codeMsg.textContent = "Код принят. Уроки открыты.";
+            render();
+            return;
+          }
+
+          // ==== ЕСЛИ КОД НЕ ВВЕДЁН — ОТПРАВИТЬ ЗАЯВКУ ====
           await postToMailWebApp(MAIL_WEBAPP_URL, {
             courseId,
             uid,
@@ -236,12 +295,12 @@
           });
 
           codeMsg.className = "tag ok";
-          codeMsg.textContent = "Письмо отправлено на вашу почту. Проверьте «Входящие/Спам».";
-
+          codeMsg.textContent = "Заявка отправлена. Ожидайте код и введите его здесь.";
           render();
+
         } catch (err) {
           codeMsg.className = "tag error";
-          codeMsg.textContent = "Ошибка отправки: " + (err?.message || err);
+          codeMsg.textContent = "Ошибка: " + (err?.message || err);
           console.error(err);
         }
       });
