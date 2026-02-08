@@ -22,7 +22,7 @@
 
     /* Video */
     .video-wrap{position:relative; width:100%; padding-top:56.25%; border-radius:12px; overflow:hidden; border:1px solid var(--b);}
-    .video-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0;}
+    .video-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;}
 
     /* PDF */
     .pdf-wrap{border:1px solid var(--b); border-radius:12px; overflow:hidden; height:520px; background:#fff;}
@@ -38,6 +38,7 @@
     .msg.err{color:var(--err);}
     .hr{height:1px;background:var(--b); margin:12px 0;}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .small{font-size:12px;}
   </style>
 </head>
 <body>
@@ -51,7 +52,12 @@
       <h2>Видеоурок</h2>
 
       <div class="video-wrap">
-        <iframe id="videoFrame" allowfullscreen></iframe>
+        <iframe
+          id="videoFrame"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>
       </div>
 
       <div class="hr"></div>
@@ -66,7 +72,7 @@
       <!-- Test section -->
       <div id="testBox" class="card" style="margin-top:14px; padding:14px;">
         <h2>Тест</h2>
-        <div class="muted">Вопросы загружаются по ссылке: <span class="mono" id="testUrlLabel"></span></div>
+        <div class="muted small">Загрузка теста по ссылке: <span class="mono" id="testUrlLabel"></span></div>
 
         <div id="testContent" style="margin-top:10px;"></div>
 
@@ -94,38 +100,50 @@
 </div>
 
 <script>
-  // =========================
-  // 1) ВСТАВЬТЕ ВАШИ ССЫЛКИ
-  // =========================
-  const VIDEO_URL = "https://youtu.be/w5-eS7igC7M?si=R7cN7ud4xusnR-OB"; // замените на свой embed
-  const PDF_URL   = "https://example.com/theory-lesson1.pdf";     // замените на ваш PDF
-  const TEST_URL  = "https://example.com/tests/lesson1.json";     // замените на ссылку на JSON тест
+  // ==========================================================
+  // ✅ ВСТАВЬТЕ СЮДА СВОИ ССЫЛКИ (ЭТО ЕДИНСТВЕННОЕ, ЧТО МЕНЯЕТЕ)
+  // ==========================================================
+  const CONFIG = {
+    // 1) YouTube: вставляйте ЛЮБУЮ ссылку (youtu.be / watch?v= / embed) — код сам сделает embed
+    youtubeUrl: "https://youtu.be/w5-eS7igC7M?si=DhJZgJjCRtJKpFnc",
 
-  // Порог прохождения (например 70%)
-  const PASS_PERCENT = 70;
+    // 2) PDF: прямая ссылка на PDF (должна открываться в браузере)
+    pdfUrl: "https://example.com/theory-lesson1.pdf",
+
+    // 3) Тест: ссылка на JSON
+    testUrl: "https://example.com/tests/lesson1.json",
+
+    // Порог прохождения (в процентах)
+    passPercent: 70
+  };
 
   // =========================
   // UI refs
   // =========================
-  const videoFrame = document.getElementById("videoFrame");
-  const pdfFrame = document.getElementById("pdfFrame");
-  const pdfLink = document.getElementById("pdfLink");
-  const openTheoryBtn = document.getElementById("openTheoryBtn");
+  const videoFrame   = document.getElementById("videoFrame");
+  const pdfFrame     = document.getElementById("pdfFrame");
+  const pdfLink      = document.getElementById("pdfLink");
+  const openTheoryBtn= document.getElementById("openTheoryBtn");
   const startTestBtn = document.getElementById("startTestBtn");
-  const statusEl = document.getElementById("status");
+  const statusEl     = document.getElementById("status");
 
-  const testBox = document.getElementById("testBox");
+  const testBox      = document.getElementById("testBox");
   const testUrlLabel = document.getElementById("testUrlLabel");
-  const testContent = document.getElementById("testContent");
-  const submitTestBtn = document.getElementById("submitTestBtn");
-  const hideTestBtn = document.getElementById("hideTestBtn");
-  const testResult = document.getElementById("testResult");
+  const testContent  = document.getElementById("testContent");
+  const submitTestBtn= document.getElementById("submitTestBtn");
+  const hideTestBtn  = document.getElementById("hideTestBtn");
+  const testResult   = document.getElementById("testResult");
 
-  // Set initial content
-  videoFrame.src = VIDEO_URL;
-  pdfFrame.src = PDF_URL;
-  pdfLink.href = PDF_URL;
-  testUrlLabel.textContent = TEST_URL;
+  // =========================
+  // Init
+  // =========================
+  const embedUrl = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
+  videoFrame.src = embedUrl;
+
+  pdfFrame.src = CONFIG.pdfUrl;
+  pdfLink.href = CONFIG.pdfUrl;
+
+  testUrlLabel.textContent = CONFIG.testUrl;
 
   // Scroll to theory
   openTheoryBtn.addEventListener("click", () => {
@@ -142,8 +160,9 @@
     statusEl.textContent = "Загружаю тест...";
 
     try {
-      testData = await loadTest(TEST_URL);
+      testData = await loadTest(CONFIG.testUrl);
       renderTest(testData);
+
       testBox.style.display = "block";
       testBox.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -152,7 +171,8 @@
       testResult.textContent = "";
     } catch (e) {
       statusEl.className = "msg err";
-      statusEl.textContent = "Не удалось загрузить тест. Проверьте ссылку TEST_URL и доступность файла.";
+      statusEl.textContent =
+        "Не удалось загрузить тест. Проверьте ссылку на JSON и наличие CORS (если файл на другом домене).";
       console.error(e);
     }
   });
@@ -166,30 +186,29 @@
     if (!testData) return;
 
     const { correct, total, percent } = gradeTest(testData);
-    const passed = percent >= PASS_PERCENT;
+    const passed = percent >= CONFIG.passPercent;
 
     testResult.className = "msg " + (passed ? "ok" : "err");
     testResult.textContent =
       `Результат: ${correct}/${total} (${percent.toFixed(0)}%). ` +
-      (passed ? "Тест пройден ✅" : `Не пройден ❌ (нужно ≥ ${PASS_PERCENT}%).`);
-
-    // Здесь позже можно добавить запись результата в Firestore (если нужно)
+      (passed ? "Тест пройден ✅" : `Не пройден ❌ (нужно ≥ ${CONFIG.passPercent}%).`);
   });
 
   async function loadTest(url) {
-    // Важно: если тест лежит на другом домене, у него должен быть разрешён CORS.
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
 
-    // минимальная проверка структуры
+    const data = await res.json();
     if (!data || !Array.isArray(data.questions)) throw new Error("Bad test JSON structure");
     return data;
   }
 
   function renderTest(data) {
     testContent.innerHTML = "";
-    const title = data.title ? `<div class="muted" style="margin:6px 0 12px;"><b>${escapeHtml(data.title)}</b></div>` : "";
+
+    const title = data.title
+      ? `<div class="muted" style="margin:6px 0 12px;"><b>${escapeHtml(data.title)}</b></div>`
+      : "";
     testContent.insertAdjacentHTML("beforeend", title);
 
     data.questions.forEach((q, idx) => {
@@ -204,7 +223,6 @@
 
       const opts = box.querySelector(`#${qId}_opts`);
       q.options.forEach((opt, j) => {
-        const optId = `${qId}_${j}`;
         const label = document.createElement("label");
         label.innerHTML = `
           <input type="radio" name="${qId}" value="${j}" />
@@ -231,6 +249,45 @@
 
     const percent = total ? (correct / total) * 100 : 0;
     return { correct, total, percent };
+  }
+
+  // =========================
+  // Helpers
+  // =========================
+  function toYouTubeEmbedUrl(url) {
+    // принимает:
+    // - https://youtu.be/VIDEOID?...
+    // - https://www.youtube.com/watch?v=VIDEOID&...
+    // - https://www.youtube.com/embed/VIDEOID?...
+    // возвращает embed + безопасные параметры
+    let id = "";
+
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes("youtu.be")) {
+        id = u.pathname.replace("/", "").trim();
+      } else if (u.hostname.includes("youtube.com") || u.hostname.includes("youtube-nocookie.com")) {
+        if (u.pathname.startsWith("/embed/")) {
+          id = u.pathname.split("/embed/")[1]?.split("/")[0] || "";
+        } else {
+          id = u.searchParams.get("v") || "";
+        }
+      }
+    } catch (e) {
+      // если URL кривой, пробуем вытащить id регэкспом
+      const m = String(url).match(/(youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
+      id = m ? m[2] : "";
+    }
+
+    if (!id) return "about:blank";
+
+    // nocookie обычно лучше для встраивания
+    const base = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
+    const params = new URLSearchParams({
+      rel: "0",
+      modestbranding: "1"
+    });
+    return `${base}?${params.toString()}`;
   }
 
   function escapeHtml(s) {
