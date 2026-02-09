@@ -10,17 +10,13 @@
     .app{display:grid;grid-template-columns:320px 1fr; height:100vh;}
     @media (max-width: 900px){ .app{grid-template-columns:1fr; grid-template-rows:auto 1fr;} }
 
-    /* Sidebar */
     .sidebar{background:var(--card);border-right:1px solid var(--b);padding:14px;overflow:auto;}
     .titleRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
     .title{font-size:18px;font-weight:800;margin:0;}
     .muted{color:var(--mut);font-size:12px;margin-bottom:12px;line-height:1.35;}
 
     .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
-    .btn{
-      border:1px solid var(--b); background:#fff; border-radius:12px; padding:9px 10px;
-      cursor:pointer; font-weight:700; font-size:12px;
-    }
+    .btn{border:1px solid var(--b); background:#fff; border-radius:12px; padding:9px 10px; cursor:pointer; font-weight:700; font-size:12px;}
     .btnPrimary{border-color:var(--accent); color:#fff; background:var(--accent);}
     .pill{
       display:inline-flex;align-items:center;justify-content:center;
@@ -37,12 +33,10 @@
     }
     .item:hover{filter:brightness(0.99);}
     .item.active{outline:2px solid var(--accent); border-color:var(--accent);}
-
     .leftCol{min-width:0;}
     .item .name{font-weight:700;font-size:14px;margin:0 0 3px;}
     .item .desc{font-size:12px;color:var(--mut);margin:0;}
 
-    /* locked */
     .item.locked{opacity:.55; background:#f3f4f6; cursor:default;}
     .badge{
       font-size:11px; font-weight:800; border-radius:999px; padding:4px 8px; border:1px solid var(--b);
@@ -51,14 +45,10 @@
     .badge.lock{border-color:rgba(180,35,24,.25); color:var(--danger); background:rgba(180,35,24,.06);}
     .badge.ok{border-color:rgba(2,122,72,.25); color:var(--ok); background:rgba(2,122,72,.06);}
     .actions{display:flex;flex-direction:column;gap:6px; align-items:flex-end;}
-    .miniBtn{
-      border:1px solid var(--b); background:#fff; border-radius:10px; padding:6px 8px;
-      cursor:pointer; font-weight:800; font-size:11px; color:#111;
-    }
+    .miniBtn{border:1px solid var(--b); background:#fff; border-radius:10px; padding:6px 8px; cursor:pointer; font-weight:800; font-size:11px;}
     .miniBtn:disabled{opacity:.5; cursor:not-allowed;}
     .miniBtnPrimary{border-color:rgba(37,99,235,.35); color:var(--accent); background:rgba(37,99,235,.06);}
 
-    /* Viewer */
     .viewer{padding:14px;overflow:hidden;}
     .viewerHeader{
       display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -67,28 +57,20 @@
     }
     .viewerHeader .h{font-weight:800;}
     .viewerHeader a{font-size:12px;color:var(--accent);text-decoration:none}
-
-    /* 100dvh лучше для телефонов */
     .frameWrap{
       background:var(--card); border:1px solid var(--b); border-radius:14px; overflow:hidden;
       height: calc(100dvh - 90px);
     }
     iframe{width:100%;height:100%;border:0;}
 
-    /* Modal */
     .backdrop{position:fixed; inset:0; background:rgba(16,24,40,.45); display:none; align-items:center; justify-content:center; padding:16px;}
-    .modal{
-      width:min(520px, 100%); background:#fff; border:1px solid var(--b); border-radius:16px;
-      box-shadow:0 24px 60px rgba(16,24,40,.2); overflow:hidden;
-    }
+    .modal{width:min(520px, 100%); background:#fff; border:1px solid var(--b); border-radius:16px; box-shadow:0 24px 60px rgba(16,24,40,.2); overflow:hidden;}
     .modalHead{padding:12px 14px; border-bottom:1px solid var(--b); display:flex; align-items:center; justify-content:space-between; gap:10px;}
     .modalHead .mh{font-weight:900;}
     .modalBody{padding:14px;}
     .field{display:flex; flex-direction:column; gap:6px; width:100%;}
     label{font-size:12px; color:var(--mut); font-weight:700;}
-    input{
-      border:1px solid var(--b); border-radius:12px; padding:10px 12px; font-size:14px; outline:none;
-    }
+    input{border:1px solid var(--b); border-radius:12px; padding:10px 12px; font-size:14px; outline:none;}
     input:focus{border-color:rgba(37,99,235,.5); box-shadow:0 0 0 4px rgba(37,99,235,.12);}
     .help{font-size:12px; color:var(--mut); line-height:1.35;}
     .modalFoot{padding:12px 14px; border-top:1px solid var(--b); display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;}
@@ -100,7 +82,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- LEFT -->
     <aside class="sidebar">
       <div class="titleRow">
         <div class="title">Промты</div>
@@ -109,18 +90,17 @@
 
       <div class="muted">
         Серые промты закрыты (нужен код).<br>
-        Для отображения PDF на телефоне и ПК используется универсальный просмотрщик.
+        PDF открывается через ViewerNG — работает стабильнее на телефонах и GitHub Pages.
       </div>
 
       <div class="toolbar">
         <button class="btn btnPrimary" id="openCartBtn">Корзина</button>
-        <button class="btn" id="resetBtn" title="Сбросить разблокировки на этом устройстве">Сброс</button>
+        <button class="btn" id="resetBtn">Сброс</button>
       </div>
 
       <div class="list" id="promptList"></div>
     </aside>
 
-    <!-- RIGHT -->
     <main class="viewer">
       <div class="viewerHeader">
         <div class="h" id="viewerTitle">Выберите промт слева</div>
@@ -133,7 +113,6 @@
     </main>
   </div>
 
-  <!-- MODAL -->
   <div class="backdrop" id="backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modalHead">
@@ -146,7 +125,6 @@
   </div>
 
 <script>
-  // ====== ПРОМТЫ (ДОБАВЛЯЙ СЮДА) ======
   const prompts = [
     {
       id: "p1",
@@ -164,8 +142,6 @@
       price: 0,
       locked: false
     },
-
-    // ====== 3 ПЛАТНЫХ (ПОМЕНЯЙ ID В ССЫЛКЕ НА СВОИ) ======
     {
       id: "p3",
       name: "Промт №3 — (платный) Конструктор уроков",
@@ -192,8 +168,6 @@
     }
   ];
 
-  // ====== КОДЫ (ДЕМО) ======
-  // В реальности: коды выдаёт сервер/оплата.
   const ACCESS_CODES = {
     "AI-PAID-3": ["p3"],
     "AI-PAID-4": ["p4"],
@@ -201,19 +175,20 @@
     "AI-PAID-ALL": ["p3","p4","p5"]
   };
 
-  const STORAGE_KEY_UNLOCKED = "prompt_unlocked_ids_v2";
-  const STORAGE_KEY_CART = "prompt_cart_ids_v2";
+  const STORAGE_KEY_UNLOCKED = "prompt_unlocked_ids_v3";
+  const STORAGE_KEY_CART = "prompt_cart_ids_v3";
 
-  // ====== УНИВЕРСАЛЬНЫЙ ПРОСМОТР PDF ======
-  // Всегда используем Google Docs Viewer + прямая ссылка на PDF из Drive.
-  // Это наиболее стабильный вариант для телефонов и ПК.
-  function toUniversalViewerUrl(shareUrl) {
+  // ✅ Универсальный iframe-URL: ViewerNG + прямая ссылка на PDF
+  function toViewerNgUrl(shareUrl) {
     const m = shareUrl.match(/\/file\/d\/([^/]+)\//);
-    if (!m) return shareUrl; // если ссылка не drive/file/d/.../
-
+    if (!m) return shareUrl;
     const fileId = m[1];
+
+    // Прямая ссылка на файл (важно: Drive доступ "Anyone with link")
     const directPdf = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(directPdf)}`;
+
+    // ViewerNG (стабильнее gview/preview в iframe)
+    return `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(directPdf)}`;
   }
 
   function loadSet(key) {
@@ -227,7 +202,6 @@
   let unlocked = loadSet(STORAGE_KEY_UNLOCKED);
   let cart = loadSet(STORAGE_KEY_CART);
 
-  // ====== DOM ======
   const listEl = document.getElementById("promptList");
   const frame = document.getElementById("pdfFrame");
   const viewerTitle = document.getElementById("viewerTitle");
@@ -259,7 +233,6 @@
     return !p.locked || unlocked.has(p.id);
   }
 
-  // ====== СПИСОК ======
   let currentActiveId = null;
 
   function renderList() {
@@ -282,11 +255,7 @@
             <button class="miniBtn" data-code="${p.id}">Ввести код</button>
           </div>
         `
-        : `
-          <div class="actions">
-            ${badge}
-          </div>
-        `;
+        : `<div class="actions">${badge}</div>`;
 
       div.innerHTML = `
         <div class="leftCol">
@@ -296,13 +265,11 @@
         ${actions}
       `;
 
-      // клик по карточке
       div.addEventListener("click", () => {
         if (!isPromptUnlocked(p)) { openCodeModal(p.id); return; }
         selectPrompt(p.id);
       });
 
-      // кнопка "в корзину"
       div.querySelectorAll("[data-add]").forEach(btn => {
         btn.addEventListener("click", (ev) => {
           ev.stopPropagation();
@@ -315,7 +282,6 @@
         });
       });
 
-      // кнопка "ввести код"
       div.querySelectorAll("[data-code]").forEach(btn => {
         btn.addEventListener("click", (ev) => {
           ev.stopPropagation();
@@ -339,7 +305,6 @@
   function selectPrompt(id) {
     const p = prompts.find(x => x.id === id);
     if (!p) return;
-
     if (!isPromptUnlocked(p)) { openCodeModal(id); return; }
 
     currentActiveId = id;
@@ -347,15 +312,14 @@
 
     viewerTitle.textContent = p.name;
 
-    // универсальная ссылка в iframe (ПК+телефон)
-    frame.src = toUniversalViewerUrl(p.shareUrl);
+    // ✅ В iframe — ViewerNG
+    frame.src = toViewerNgUrl(p.shareUrl);
 
-    // открыть "в новой вкладке" — лучше давать оригинальный shareUrl
+    // ✅ В новой вкладке — оригинальный Drive shareUrl
     openLink.style.display = "inline";
     openLink.href = p.shareUrl;
   }
 
-  // ====== МОДАЛКИ ======
   function openModal(title, bodyHtml, footHtml) {
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
@@ -379,9 +343,7 @@
     const body = items.length
       ? `
         <div class="help">Промты в корзине:</div>
-        <ul>
-          ${items.map(p => `<li><b>${p.name}</b> — ${p.price || 0} ₸</li>`).join("")}
-        </ul>
+        <ul>${items.map(p => `<li><b>${p.name}</b> — ${p.price || 0} ₸</li>`).join("")}</ul>
         <p class="help" style="margin-top:10px;"><b>Итого:</b> ${total} ₸</p>
 
         <div class="field" style="margin-top:10px;">
@@ -390,10 +352,6 @@
           <div class="dangerText" id="codeErr">Неверный код.</div>
           <div class="okText" id="codeOk">Готово! Промты разблокированы.</div>
         </div>
-
-        <p class="help" style="margin-top:10px;">
-          Важно: просмотр работает на всех устройствах при условии, что в Google Drive включён доступ “Anyone with link”.
-        </p>
       `
       : `<div class="help">Корзина пустая.</div>`;
 
@@ -420,11 +378,9 @@
     });
 
     document.getElementById("applyCodeBtn").addEventListener("click", () => {
-      const input = document.getElementById("codeInput");
+      const code = (document.getElementById("codeInput").value || "").trim();
       const err = document.getElementById("codeErr");
       const ok = document.getElementById("codeOk");
-      const code = (input.value || "").trim();
-
       err.style.display = "none";
       ok.style.display = "none";
 
@@ -434,7 +390,6 @@
       unlockIds.forEach(id => unlocked.add(id));
       saveSet(STORAGE_KEY_UNLOCKED, unlocked);
 
-      // очистить из корзины то, что открыли
       unlockIds.forEach(id => cart.delete(id));
       saveSet(STORAGE_KEY_CART, cart);
 
@@ -479,25 +434,19 @@
       const unlockIds = ACCESS_CODES[code];
       if (!unlockIds) { err.style.display = "block"; return; }
 
-      // Открываем всё, что даёт код (или ALL)
       unlockIds.forEach(id => unlocked.add(id));
       saveSet(STORAGE_KEY_UNLOCKED, unlocked);
 
       ok.style.display = "block";
       renderList();
-
-      // автоматически открыть выбранный промт
       selectPrompt(promptId);
-      setTimeout(closeModal, 500);
+      setTimeout(closeModal, 400);
     });
   }
 
-  // ====== START ======
   function init() {
     updateCartCount();
     renderList();
-
-    // открыть первый доступный промт
     const firstAvailable = prompts.find(p => isPromptUnlocked(p));
     if (firstAvailable) selectPrompt(firstAvailable.id);
   }
