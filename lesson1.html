@@ -89,12 +89,13 @@
     <div class="card" id="theoryCard">
       <h2>Теория (PDF)</h2>
       <div class="pdf-wrap">
-        <iframe id="pdfFrame"></iframe>
+        <iframe id="pdfFrame" title="Теория PDF"></iframe>
       </div>
       <div class="muted" style="margin-top:8px;">
         Если PDF не отображается, откройте его в новой вкладке:
         <a id="pdfLink" href="#" target="_blank" rel="noopener noreferrer">Открыть PDF</a>
       </div>
+      <div id="pdfHint" class="msg small"></div>
     </div>
   </div>
 </div>
@@ -104,48 +105,50 @@
   // ✅ ВСТАВЬТЕ СЮДА СВОИ ССЫЛКИ (ЭТО ЕДИНСТВЕННОЕ, ЧТО МЕНЯЕТЕ)
   // ==========================================================
   const CONFIG = {
-    // 1) YouTube: вставляйте ЛЮБУЮ ссылку (youtu.be / watch?v= / embed) — код сам сделает embed
     youtubeUrl: "https://youtu.be/w5-eS7igC7M?si=DhJZgJjCRtJKpFnc",
 
-    // 2) PDF: прямая ссылка на PDF (должна открываться в браузере)
-    pdfUrl: "pdfUrl: "https://raw.githubusercontent.com/bsm141183-coder/Aieduportal/main/assets/lesson1-ai.pdf",
+    // ✅ ВАЖНО: тут должна быть ОДНА строка-URL, без лишних кавычек/слов
+    pdfUrl: "https://raw.githubusercontent.com/bsm141183-coder/Aieduportal/main/assets/lesson1-ai.pdf",
 
-    // 3) Тест: ссылка на JSON
-    testUrl: "https://example.com/tests/lesson1.json",
+    // сюда поставьте ваш реальный JSON-тест, когда будет готов
+    testUrl: "https://raw.githubusercontent.com/bsm141183-coder/Aieduportal/main/tests/lesson1.json",
 
-    // Порог прохождения (в процентах)
     passPercent: 70
   };
 
-  // =========================
-  // UI refs
-  // =========================
-  const videoFrame   = document.getElementById("videoFrame");
-  const pdfFrame     = document.getElementById("pdfFrame");
-  const pdfLink      = document.getElementById("pdfLink");
-  const openTheoryBtn= document.getElementById("openTheoryBtn");
-  const startTestBtn = document.getElementById("startTestBtn");
-  const statusEl     = document.getElementById("status");
+  const videoFrame    = document.getElementById("videoFrame");
+  const pdfFrame      = document.getElementById("pdfFrame");
+  const pdfLink       = document.getElementById("pdfLink");
+  const pdfHint       = document.getElementById("pdfHint");
+  const openTheoryBtn = document.getElementById("openTheoryBtn");
+  const startTestBtn  = document.getElementById("startTestBtn");
+  const statusEl      = document.getElementById("status");
 
-  const testBox      = document.getElementById("testBox");
-  const testUrlLabel = document.getElementById("testUrlLabel");
-  const testContent  = document.getElementById("testContent");
-  const submitTestBtn= document.getElementById("submitTestBtn");
-  const hideTestBtn  = document.getElementById("hideTestBtn");
-  const testResult   = document.getElementById("testResult");
+  const testBox       = document.getElementById("testBox");
+  const testUrlLabel  = document.getElementById("testUrlLabel");
+  const testContent   = document.getElementById("testContent");
+  const submitTestBtn = document.getElementById("submitTestBtn");
+  const hideTestBtn   = document.getElementById("hideTestBtn");
+  const testResult    = document.getElementById("testResult");
 
-  // =========================
-  // Init
-  // =========================
+  // ===== Init media =====
   const embedUrl = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
   videoFrame.src = embedUrl;
 
   pdfFrame.src = CONFIG.pdfUrl;
   pdfLink.href = CONFIG.pdfUrl;
 
+  // Подсказка, если браузер/хостинг блокирует iframe с PDF
+  if (!CONFIG.pdfUrl || CONFIG.pdfUrl === "about:blank") {
+    pdfHint.className = "msg err small";
+    pdfHint.textContent = "Ссылка на PDF не задана или неверная.";
+  } else {
+    pdfHint.className = "msg small";
+    pdfHint.textContent = "Если рамка пустая — нажмите «Открыть PDF» (это обходит блокировку в iframe на некоторых хостингах).";
+  }
+
   testUrlLabel.textContent = CONFIG.testUrl;
 
-  // Scroll to theory
   openTheoryBtn.addEventListener("click", () => {
     document.getElementById("theoryCard").scrollIntoView({ behavior: "smooth", block: "start" });
   });
@@ -172,7 +175,7 @@
     } catch (e) {
       statusEl.className = "msg err";
       statusEl.textContent =
-        "Не удалось загрузить тест. Проверьте ссылку на JSON и наличие CORS (если файл на другом домене).";
+        "Не удалось загрузить тест. Проверьте ссылку на JSON (и что файл реально существует).";
       console.error(e);
     }
   });
@@ -255,11 +258,6 @@
   // Helpers
   // =========================
   function toYouTubeEmbedUrl(url) {
-    // принимает:
-    // - https://youtu.be/VIDEOID?...
-    // - https://www.youtube.com/watch?v=VIDEOID&...
-    // - https://www.youtube.com/embed/VIDEOID?...
-    // возвращает embed + безопасные параметры
     let id = "";
 
     try {
@@ -274,19 +272,14 @@
         }
       }
     } catch (e) {
-      // если URL кривой, пробуем вытащить id регэкспом
       const m = String(url).match(/(youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
       id = m ? m[2] : "";
     }
 
     if (!id) return "about:blank";
 
-    // nocookie обычно лучше для встраивания
     const base = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
-    const params = new URLSearchParams({
-      rel: "0",
-      modestbranding: "1"
-    });
+    const params = new URLSearchParams({ rel: "0", modestbranding: "1" });
     return `${base}?${params.toString()}`;
   }
 
