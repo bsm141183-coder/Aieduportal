@@ -5,24 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Промты — библиотека</title>
   <style>
-    :root { --b:#dbe3ff; --bg:#f6f8ff; --mut:#667085; --card:#fff; }
+    :root { --b:#dbe3ff; --bg:#f6f8ff; --mut:#667085; --card:#fff; --accent:#2563eb; --danger:#b42318; --ok:#027a48; }
     body{margin:0;font-family:system-ui,Segoe UI,Arial;background:var(--bg);}
     .app{display:grid;grid-template-columns:320px 1fr; height:100vh;}
     @media (max-width: 900px){ .app{grid-template-columns:1fr; grid-template-rows:auto 1fr;} }
 
     /* Sidebar */
     .sidebar{background:var(--card);border-right:1px solid var(--b);padding:14px;overflow:auto;}
-    .title{font-size:18px;font-weight:800;margin:0 0 10px;}
+    .titleRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+    .title{font-size:18px;font-weight:800;margin:0;}
     .muted{color:var(--mut);font-size:12px;margin-bottom:12px;line-height:1.35;}
+
+    .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+    .btn{
+      border:1px solid var(--b); background:#fff; border-radius:12px; padding:9px 10px;
+      cursor:pointer; font-weight:700; font-size:12px;
+    }
+    .btnPrimary{border-color:var(--accent); color:#fff; background:var(--accent);}
+    .pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:20px;height:20px;border-radius:999px;background:rgba(37,99,235,.12);
+      color:var(--accent);font-weight:800;font-size:12px;padding:0 6px;
+      border:1px solid rgba(37,99,235,.25);
+    }
+
     .list{display:flex;flex-direction:column;gap:8px;}
     .item{
       border:1px solid var(--b); border-radius:12px; padding:10px 10px;
       cursor:pointer; background:#fff;
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
     }
     .item:hover{filter:brightness(0.99);}
-    .item.active{outline:2px solid #2563eb; border-color:#2563eb;}
+    .item.active{outline:2px solid var(--accent); border-color:var(--accent);}
+
+    .leftCol{min-width:0;}
     .item .name{font-weight:700;font-size:14px;margin:0 0 3px;}
     .item .desc{font-size:12px;color:var(--mut);margin:0;}
+
+    /* locked */
+    .item.locked{opacity:.55; background:#f3f4f6; cursor:default;}
+    .badge{
+      font-size:11px; font-weight:800; border-radius:999px; padding:4px 8px; border:1px solid var(--b);
+      color:var(--mut); background:#fff; white-space:nowrap;
+    }
+    .badge.lock{border-color:rgba(180,35,24,.25); color:var(--danger); background:rgba(180,35,24,.06);}
+    .badge.ok{border-color:rgba(2,122,72,.25); color:var(--ok); background:rgba(2,122,72,.06);}
+    .actions{display:flex;flex-direction:column;gap:6px; align-items:flex-end;}
+    .miniBtn{
+      border:1px solid var(--b); background:#fff; border-radius:10px; padding:6px 8px;
+      cursor:pointer; font-weight:800; font-size:11px; color:#111;
+    }
+    .miniBtn:disabled{opacity:.5; cursor:not-allowed;}
+    .miniBtnPrimary{border-color:rgba(37,99,235,.35); color:var(--accent); background:rgba(37,99,235,.06);}
 
     /* Viewer */
     .viewer{padding:14px;overflow:hidden;}
@@ -32,22 +66,54 @@
       margin-bottom:10px;
     }
     .viewerHeader .h{font-weight:800;}
-    .viewerHeader a{font-size:12px;color:#2563eb;text-decoration:none}
+    .viewerHeader a{font-size:12px;color:var(--accent);text-decoration:none}
     .frameWrap{
       background:var(--card); border:1px solid var(--b); border-radius:14px; overflow:hidden;
       height: calc(100vh - 90px);
     }
     iframe{width:100%;height:100%;border:0;}
+
+    /* Modal */
+    .backdrop{position:fixed; inset:0; background:rgba(16,24,40,.45); display:none; align-items:center; justify-content:center; padding:16px;}
+    .modal{
+      width:min(520px, 100%); background:#fff; border:1px solid var(--b); border-radius:16px;
+      box-shadow:0 24px 60px rgba(16,24,40,.2); overflow:hidden;
+    }
+    .modalHead{padding:12px 14px; border-bottom:1px solid var(--b); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .modalHead .mh{font-weight:900;}
+    .modalBody{padding:14px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap;}
+    .field{display:flex; flex-direction:column; gap:6px; width:100%;}
+    label{font-size:12px; color:var(--mut); font-weight:700;}
+    input{
+      border:1px solid var(--b); border-radius:12px; padding:10px 12px; font-size:14px; outline:none;
+    }
+    input:focus{border-color:rgba(37,99,235,.5); box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .help{font-size:12px; color:var(--mut); line-height:1.35;}
+    .modalFoot{padding:12px 14px; border-top:1px solid var(--b); display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;}
+    .dangerText{color:var(--danger); font-size:12px; font-weight:800; margin-top:8px; display:none;}
+    .okText{color:var(--ok); font-size:12px; font-weight:800; margin-top:8px; display:none;}
+    .closeX{border:1px solid var(--b); background:#fff; border-radius:10px; padding:6px 8px; cursor:pointer; font-weight:900;}
+    ul{margin:10px 0 0 18px; padding:0;}
   </style>
 </head>
 <body>
   <div class="app">
     <!-- LEFT -->
     <aside class="sidebar">
-      <div class="title">Промты</div>
+      <div class="titleRow">
+        <div class="title">Промты</div>
+        <div class="pill" id="cartCount">0</div>
+      </div>
+
       <div class="muted">
-        Нажмите на пункт слева — справа откроется PDF из Google Drive.
-        <br>Если PDF не показывается, проверьте доступ: <b>Anyone with link</b>.
+        Слева список промтов. Серые — закрыты (нужен доступ).<br>
+        Можно добавить в корзину и активировать после оплаты кодом.
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btnPrimary" id="openCartBtn">Корзина</button>
+        <button class="btn" id="resetBtn" title="Сбросить разблокировки на этом устройстве">Сброс</button>
       </div>
 
       <div class="list" id="promptList"></div>
@@ -66,24 +132,81 @@
     </main>
   </div>
 
+  <!-- MODAL -->
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalHead">
+        <div class="mh" id="modalTitle">Корзина</div>
+        <button class="closeX" id="closeModalBtn">✕</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+      <div class="modalFoot" id="modalFoot"></div>
+    </div>
+  </div>
+
 <script>
-  // 1) Ваши ссылки из Google Drive (share links)
+  // ====== НАСТРОЙКИ ======
+  // 1) Добавляй новые промты сюда (p3..p5 - закрытые)
   const prompts = [
     {
       id: "p1",
       name: "Промт №1 — Генератор тестов",
       desc: "PDF на Google Drive",
-      shareUrl: "https://drive.google.com/file/d/1HkLZbZuKi2fY3myMxgDaif6HCN_QA7GL/view?usp=sharing"
+      shareUrl: "https://drive.google.com/file/d/1HkLZbZuKi2fY3myMxgDaif6HCN_QA7GL/view?usp=sharing",
+      price: 0,
+      locked: false
     },
     {
       id: "p2",
       name: "Промт №2 — Мини-тест за 2 минуты",
       desc: "PDF на Google Drive",
-      shareUrl: "https://drive.google.com/file/d/1BEuVlfmNStjy2uZD1hLqBNlzKzqE-5Dm/view?usp=sharing"
+      shareUrl: "https://drive.google.com/file/d/1BEuVlfmNStjy2uZD1hLqBNlzKzqE-5Dm/view?usp=sharing",
+      price: 0,
+      locked: false
+    },
+
+    // ====== ТРИ НОВЫХ ПРОМТА (ЗАКРЫТЫЕ) ======
+    {
+      id: "p3",
+      name: "Промт №3 — (платный) Конструктор уроков",
+      desc: "Доступ после оплаты",
+      shareUrl: "https://drive.google.com/file/d/XXXXXXXXXXXXXXX/view?usp=sharing",
+      price: 1500,
+      locked: true
+    },
+    {
+      id: "p4",
+      name: "Промт №4 — (платный) Генератор критериев оценивания",
+      desc: "Доступ после оплаты",
+      shareUrl: "https://drive.google.com/file/d/YYYYYYYYYYYYYYY/view?usp=sharing",
+      price: 1500,
+      locked: true
+    },
+    {
+      id: "p5",
+      name: "Промт №5 — (платный) Сценарии + задания по темам",
+      desc: "Доступ после оплаты",
+      shareUrl: "https://drive.google.com/file/d/ZZZZZZZZZZZZZZZ/view?usp=sharing",
+      price: 2000,
+      locked: true
     }
   ];
 
-  // 2) Преобразование shareUrl -> embed/preview URL для iframe
+  // 2) Коды доступа (демо).
+  // В реальности эти коды должен выдавать сервер/оплата.
+  const ACCESS_CODES = {
+    // код -> список промтов которые открывает
+    "AI-PAID-3": ["p3"],
+    "AI-PAID-4": ["p4"],
+    "AI-PAID-5": ["p5"],
+    // универсальный код (пример): открывает все платные
+    "AI-PAID-ALL": ["p3","p4","p5"]
+  };
+
+  const STORAGE_KEY_UNLOCKED = "prompt_unlocked_ids_v1";
+  const STORAGE_KEY_CART = "prompt_cart_ids_v1";
+
+  // ====== УТИЛИТЫ ======
   function toDrivePreviewUrl(shareUrl) {
     const m = shareUrl.match(/\/file\/d\/([^/]+)\//);
     if (!m) return shareUrl;
@@ -91,21 +214,135 @@
     return `https://drive.google.com/file/d/${fileId}/preview`;
   }
 
+  function loadUnlockedSet() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY_UNLOCKED) || "[]");
+      return new Set(arr);
+    } catch { return new Set(); }
+  }
+  function saveUnlockedSet(set) {
+    localStorage.setItem(STORAGE_KEY_UNLOCKED, JSON.stringify([...set]));
+  }
+
+  function loadCartSet() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY_CART) || "[]");
+      return new Set(arr);
+    } catch { return new Set(); }
+  }
+  function saveCartSet(set) {
+    localStorage.setItem(STORAGE_KEY_CART, JSON.stringify([...set]));
+  }
+
+  let unlocked = loadUnlockedSet();
+  let cart = loadCartSet();
+
+  // ====== DOM ======
   const listEl = document.getElementById("promptList");
   const frame = document.getElementById("pdfFrame");
   const viewerTitle = document.getElementById("viewerTitle");
   const openLink = document.getElementById("openLink");
+  const cartCount = document.getElementById("cartCount");
 
+  const backdrop = document.getElementById("backdrop");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const modalFoot = document.getElementById("modalFoot");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+
+  document.getElementById("openCartBtn").addEventListener("click", openCartModal);
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY_UNLOCKED);
+    localStorage.removeItem(STORAGE_KEY_CART);
+    unlocked = new Set();
+    cart = new Set();
+    renderList();
+    updateCartCount();
+    viewerTitle.textContent = "Выберите промт слева";
+    frame.src = "";
+    openLink.style.display = "none";
+  });
+
+  closeModalBtn.addEventListener("click", closeModal);
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
+
+  function isPromptUnlocked(p) {
+    return !p.locked || unlocked.has(p.id);
+  }
+
+  // ====== РЕНДЕР СПИСКА ======
   function renderList() {
     listEl.innerHTML = "";
-    prompts.forEach((p, idx) => {
+    prompts.forEach((p) => {
       const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `<div class="name">${p.name}</div><div class="desc">${p.desc}</div>`;
-      div.addEventListener("click", () => selectPrompt(p.id));
+      const unlockedNow = isPromptUnlocked(p);
+
+      div.className = "item" + (unlockedNow ? "" : " locked");
+
+      const badge = unlockedNow
+        ? `<span class="badge ok">Доступ</span>`
+        : `<span class="badge lock">Закрыто</span>`;
+
+      const actions = (!unlockedNow)
+        ? `
+          <div class="actions">
+            ${badge}
+            <button class="miniBtn miniBtnPrimary" data-add="${p.id}">${cart.has(p.id) ? "В корзине" : "В корзину"}</button>
+            <button class="miniBtn" data-code="${p.id}">Ввести код</button>
+          </div>
+        `
+        : `
+          <div class="actions">
+            ${badge}
+          </div>
+        `;
+
+      div.innerHTML = `
+        <div class="leftCol">
+          <div class="name">${p.name}</div>
+          <div class="desc">${p.desc}${p.price ? ` • ${p.price} ₸` : ""}</div>
+        </div>
+        ${actions}
+      `;
+
+      // клик по карточке — открывает только если доступ есть
+      div.addEventListener("click", () => {
+        if (!isPromptUnlocked(p)) {
+          openCodeModal(p.id);
+          return;
+        }
+        selectPrompt(p.id);
+      });
+
+      // кнопки внутри карточки
+      div.querySelectorAll("[data-add]").forEach(btn => {
+        btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const id = btn.getAttribute("data-add");
+          if (cart.has(id)) return;
+          cart.add(id);
+          saveCartSet(cart);
+          renderList();
+          updateCartCount();
+        });
+      });
+
+      div.querySelectorAll("[data-code]").forEach(btn => {
+        btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const id = btn.getAttribute("data-code");
+          openCodeModal(id);
+        });
+      });
+
       listEl.appendChild(div);
     });
+
+    // подсветка активного
+    setActive(currentActiveId);
   }
+
+  let currentActiveId = null;
 
   function setActive(id) {
     [...document.querySelectorAll(".item")].forEach((el, i) => {
@@ -118,18 +355,178 @@
     const p = prompts.find(x => x.id === id);
     if (!p) return;
 
+    if (!isPromptUnlocked(p)) {
+      openCodeModal(id);
+      return;
+    }
+
+    currentActiveId = id;
     setActive(id);
     viewerTitle.textContent = p.name;
-
     frame.src = toDrivePreviewUrl(p.shareUrl);
 
     openLink.style.display = "inline";
     openLink.href = p.shareUrl;
   }
 
-  renderList();
-  // Открыть первый PDF сразу (можно убрать, если не нужно)
-  if (prompts.length) selectPrompt(prompts[0].id);
+  // ====== КОРЗИНА / МОДАЛКИ ======
+  function openModal(title, bodyHtml, footHtml) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    modalFoot.innerHTML = footHtml;
+    backdrop.style.display = "flex";
+    backdrop.setAttribute("aria-hidden", "false");
+  }
+  function closeModal() {
+    backdrop.style.display = "none";
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+
+  function updateCartCount() {
+    cartCount.textContent = String(cart.size);
+  }
+
+  function openCartModal() {
+    const items = prompts.filter(p => cart.has(p.id));
+    const total = items.reduce((sum, p) => sum + (p.price || 0), 0);
+
+    const body = items.length
+      ? `
+        <div class="help">Промты в корзине:</div>
+        <ul>
+          ${items.map(p => `<li><b>${p.name}</b> — ${p.price || 0} ₸</li>`).join("")}
+        </ul>
+        <p class="help" style="margin-top:10px;"><b>Итого:</b> ${total} ₸</p>
+        <p class="help">
+          Это демо-логика. В реальном варианте тут будет кнопка оплаты (Kaspi/Stripe) и выдача кода.
+        </p>
+        <div class="field" style="margin-top:10px;">
+          <label>Код доступа</label>
+          <input id="codeInput" placeholder="Например: AI-PAID-ALL" />
+          <div class="dangerText" id="codeErr">Неверный код.</div>
+          <div class="okText" id="codeOk">Готово! Промты разблокированы.</div>
+        </div>
+      `
+      : `<div class="help">Корзина пустая.</div>`;
+
+    const foot = items.length
+      ? `
+        <button class="btn" id="clearCartBtn">Очистить корзину</button>
+        <button class="btn btnPrimary" id="applyCodeBtn">Я оплатил(а) — применить код</button>
+      `
+      : `<button class="btn btnPrimary" id="closeBtn">Закрыть</button>`;
+
+    openModal("Корзина", body, foot);
+
+    if (!items.length) {
+      document.getElementById("closeBtn").addEventListener("click", closeModal);
+      return;
+    }
+
+    document.getElementById("clearCartBtn").addEventListener("click", () => {
+      cart.clear();
+      saveCartSet(cart);
+      updateCartCount();
+      renderList();
+      openCartModal();
+    });
+
+    document.getElementById("applyCodeBtn").addEventListener("click", () => {
+      const input = document.getElementById("codeInput");
+      const err = document.getElementById("codeErr");
+      const ok = document.getElementById("codeOk");
+      const code = (input.value || "").trim();
+
+      err.style.display = "none";
+      ok.style.display = "none";
+
+      const unlockIds = ACCESS_CODES[code];
+      if (!unlockIds) {
+        err.style.display = "block";
+        return;
+      }
+
+      // открываем только то, что в корзине (или все, если ALL)
+      unlockIds.forEach(id => unlocked.add(id));
+      saveUnlockedSet(unlocked);
+
+      // можно очистить корзину после успешной оплаты
+      unlockIds.forEach(id => cart.delete(id));
+      saveCartSet(cart);
+
+      ok.style.display = "block";
+      updateCartCount();
+      renderList();
+    });
+  }
+
+  function openCodeModal(promptId) {
+    const p = prompts.find(x => x.id === promptId);
+    if (!p) return;
+
+    const body = `
+      <div class="help">
+        Промт <b>${p.name}</b> закрыт. Введите код доступа.
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label>Код доступа</label>
+        <input id="singleCodeInput" placeholder="Например: AI-PAID-3 или AI-PAID-ALL" />
+        <div class="dangerText" id="singleErr">Неверный код.</div>
+        <div class="okText" id="singleOk">Доступ открыт. Можно просматривать PDF.</div>
+      </div>
+    `;
+
+    const foot = `
+      <button class="btn" id="cancelBtn">Отмена</button>
+      <button class="btn btnPrimary" id="unlockBtn">Открыть</button>
+    `;
+
+    openModal("Доступ к промту", body, foot);
+
+    document.getElementById("cancelBtn").addEventListener("click", closeModal);
+
+    document.getElementById("unlockBtn").addEventListener("click", () => {
+      const code = (document.getElementById("singleCodeInput").value || "").trim();
+      const err = document.getElementById("singleErr");
+      const ok = document.getElementById("singleOk");
+      err.style.display = "none";
+      ok.style.display = "none";
+
+      const unlockIds = ACCESS_CODES[code];
+      if (!unlockIds) {
+        err.style.display = "block";
+        return;
+      }
+
+      // если код открывает конкретный промт или ALL
+      if (!unlockIds.includes(promptId) && !unlockIds.includes("p3") && code !== "AI-PAID-ALL") {
+        // мягкая проверка: если код не открывает этот промт — ошибка
+        // (для ALL уже покрыто)
+        err.style.display = "block";
+        return;
+      }
+
+      unlockIds.forEach(id => unlocked.add(id));
+      saveUnlockedSet(unlocked);
+
+      ok.style.display = "block";
+      renderList();
+      // автоматически откроем промт
+      selectPrompt(promptId);
+      setTimeout(closeModal, 600);
+    });
+  }
+
+  // ====== START ======
+  function init() {
+    updateCartCount();
+    renderList();
+
+    // открыть первый доступный (если хочешь иначе — убери блок)
+    const firstAvailable = prompts.find(p => isPromptUnlocked(p));
+    if (firstAvailable) selectPrompt(firstAvailable.id);
+  }
+  init();
 </script>
 </body>
 </html>
