@@ -24,27 +24,39 @@
     .video-wrap{position:relative; width:100%; padding-top:56.25%; border-radius:12px; overflow:hidden; border:1px solid var(--b);}
     .video-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;}
 
-    /* PDF (через Google Viewer для нормального масштаба) */
+    /* PDF (Google Viewer for proper scaling) */
     .pdf-wrap{
       border:1px solid var(--b);
       border-radius:12px;
       overflow:hidden;
       background:#fff;
-      height:85vh;        /* адаптивно */
-      min-height:700px;   /* чтобы не было маленьким */
-      max-height:1000px;  /* чтобы не было слишком большим */
+      height:85vh;
+      min-height:700px;
+      max-height:1000px;
     }
     .pdf-wrap iframe{width:100%; height:100%; border:0; display:block;}
+
+    /* TEST (embedded page) */
+    #testCard{display:none; margin-top:14px;}
+    .test-wrap{
+      border:1px solid var(--b);
+      border-radius:12px;
+      overflow:hidden;
+      height:80vh;
+      min-height:600px;
+      background:#fff;
+    }
+    .test-wrap iframe{width:100%; height:100%; border:0; display:block;}
   </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Урок 1. Что такое ИИ</h1>
-  <div class="muted">Видео + теория в PDF + кнопка теста</div>
+  <div class="muted">Видео + теория в PDF + тест открывается на этой же странице</div>
 
   <div class="grid" style="margin-top:14px;">
-    <!-- LEFT: Video + actions -->
+    <!-- LEFT: Video + actions + embedded test -->
     <div class="card">
       <h2>Видеоурок</h2>
 
@@ -62,6 +74,19 @@
       <div class="row">
         <button class="btn secondary" id="openTheoryBtn">Открыть теорию (PDF)</button>
         <button class="btn" id="startTestBtn">Пройти тест</button>
+        <button class="btn secondary" id="hideTestBtn" style="display:none;">Скрыть тест</button>
+      </div>
+
+      <!-- TEST appears here -->
+      <div class="card" id="testCard">
+        <h2>Тест к уроку 1</h2>
+        <div class="test-wrap">
+          <iframe id="testFrame" title="Тест к уроку 1"></iframe>
+        </div>
+        <div class="muted" style="margin-top:8px;">
+          Если тест не загружается в окне, откройте в новой вкладке:
+          <a id="testLink" href="#" target="_blank" rel="noopener noreferrer">Открыть тест</a>
+        </div>
       </div>
     </div>
 
@@ -83,25 +108,32 @@
 
 <script>
   // =========================
-  // ✅ МЕНЯЕТЕ ТОЛЬКО ЭТИ ССЫЛКИ
+  // ✅ МЕНЯЕТЕ ТОЛЬКО ЭТИ ССЫЛКИ (если нужно)
   // =========================
   const CONFIG = {
     youtubeUrl: "https://youtu.be/w5-eS7igC7M?si=DhJZgJjCRtJKpFnc",
     pdfUrl: "https://bsm141183-coder.github.io/Aieduportal/assets/lesson1-ai.pdf",
-    testPage: "test_ai.html" // файл теста рядом с lesson1.html
+    testPage: "test_ai.html" // ВАЖНО: файл test_ai.html должен быть рядом с lesson1.html
   };
 
   // UI
   const videoFrame    = document.getElementById("videoFrame");
+
   const pdfFrame      = document.getElementById("pdfFrame");
   const pdfLink       = document.getElementById("pdfLink");
+
   const openTheoryBtn = document.getElementById("openTheoryBtn");
   const startTestBtn  = document.getElementById("startTestBtn");
+  const hideTestBtn   = document.getElementById("hideTestBtn");
+
+  const testCard      = document.getElementById("testCard");
+  const testFrame     = document.getElementById("testFrame");
+  const testLink      = document.getElementById("testLink");
 
   // Video
   videoFrame.src = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
 
-  // PDF через Google Viewer (чтобы не мельчило на ПК/телефоне)
+  // PDF через Google Viewer (масштаб нормально на ПК/телефоне)
   const viewer =
     "https://drive.google.com/viewerng/viewer?embedded=true&url=" +
     encodeURIComponent(CONFIG.pdfUrl);
@@ -109,17 +141,30 @@
   pdfFrame.src = viewer;
   pdfLink.href = CONFIG.pdfUrl;
 
-  // Кнопка теории — прокрутка к PDF
+  // Scroll to theory
   openTheoryBtn.addEventListener("click", () => {
     document.getElementById("theoryCard").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // ✅ Кнопка теста — просто открывает test_ai.html (НИКАКОГО JSON/загрузки)
+  // Test: open inside this page
   startTestBtn.addEventListener("click", () => {
-    window.location.href = CONFIG.testPage;
+    testCard.style.display = "block";
+    hideTestBtn.style.display = "inline-block";
+
+    testFrame.src = CONFIG.testPage;
+    testLink.href = CONFIG.testPage;
+
+    testCard.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // Helpers
+  // Hide test
+  hideTestBtn.addEventListener("click", () => {
+    testCard.style.display = "none";
+    hideTestBtn.style.display = "none";
+    testFrame.src = "about:blank";
+  });
+
+  // Helper: YouTube embed URL
   function toYouTubeEmbedUrl(url) {
     let id = "";
     try {
