@@ -168,9 +168,12 @@
   // =========================
   let testData = null;
 
-  startTestBtn.addEventListener("click", async () => {
-    statusEl.className = "msg";
-    statusEl.textContent = "Загружаю тест...";
+  startTestBtn.addEventListener("click", () => {
+  window.location.href = "test_ai.html";
+});
+//  startTestBtn.addEventListener("click", async () => {
+ //   statusEl.className = "msg";
+ //   statusEl.textContent = "Загружаю тест...";
 
     try {
       testData = await loadTest(CONFIG.testUrl);
