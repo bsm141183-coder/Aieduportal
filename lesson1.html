@@ -32,9 +32,12 @@
   border:1px solid var(--b);
   border-radius:12px;
   overflow:hidden;
-  height:85vh;      /* ← АДАПТИВНО под экран */
   background:#fff;
-}
+
+  /* фикс: нормальная высота на всех экранах */
+  height: 760px;
+  max-height: 85vh;
+  min-height: 520px;
     
     /* Test */
     #testBox{display:none;}
