@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Урок 1. Что такое ИИ</title>
   <style>
-    :root { --b:#dbe3ff; --bg:#f6f8ff; --btn:#2563eb; --mut:#667085; --err:#b42318; --ok:#027a48; }
+    :root { --b:#dbe3ff; --bg:#f6f8ff; --btn:#2563eb; --mut:#667085; }
     body{font-family:system-ui,Segoe UI,Arial; margin:20px; background:var(--bg);}
     .wrap{max-width:980px; margin:0 auto;}
     h1{margin:0 0 10px; font-size:28px;}
@@ -17,14 +17,14 @@
     .card h2{margin:0 0 10px; font-size:18px;}
     .btn{border:1px solid var(--b);border-radius:999px;padding:10px 14px;background:var(--btn);color:#fff;cursor:pointer}
     .btn.secondary{background:#fff;color:#111}
-    .btn:disabled{opacity:.55; cursor:not-allowed}
     .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .hr{height:1px;background:var(--b); margin:12px 0;}
 
     /* Video */
     .video-wrap{position:relative; width:100%; padding-top:56.25%; border-radius:12px; overflow:hidden; border:1px solid var(--b);}
     .video-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;}
 
-    /* PDF (Google Viewer inside iframe) */
+    /* PDF (через Google Viewer для нормального масштаба) */
     .pdf-wrap{
       border:1px solid var(--b);
       border-radius:12px;
@@ -32,30 +32,19 @@
       background:#fff;
       height:85vh;        /* адаптивно */
       min-height:700px;   /* чтобы не было маленьким */
-      max-height:1000px;  /* чтобы не было слишком огромным */
+      max-height:1000px;  /* чтобы не было слишком большим */
     }
     .pdf-wrap iframe{width:100%; height:100%; border:0; display:block;}
-
-    /* Test */
-    #testBox{display:none;}
-    .q{border:1px solid var(--b); border-radius:12px; padding:12px; margin:10px 0;}
-    .q-title{font-weight:700; margin:0 0 8px;}
-    label{display:flex; gap:8px; padding:6px 0; cursor:pointer;}
-    .msg{font-size:13px; margin-top:8px;}
-    .msg.ok{color:var(--ok);}
-    .msg.err{color:var(--err);}
-    .hr{height:1px;background:var(--b); margin:12px 0;}
-    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .small{font-size:12px;}
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <h1>Урок 1. Что такое ИИ</h1>
-  <div class="muted">Видео + теория в PDF + тест на этой же странице</div>
+  <div class="muted">Видео + теория в PDF + кнопка теста</div>
 
   <div class="grid" style="margin-top:14px;">
-    <!-- LEFT -->
+    <!-- LEFT: Video + actions -->
     <div class="card">
       <h2>Видеоурок</h2>
 
@@ -74,26 +63,9 @@
         <button class="btn secondary" id="openTheoryBtn">Открыть теорию (PDF)</button>
         <button class="btn" id="startTestBtn">Пройти тест</button>
       </div>
-
-      <div id="status" class="msg"></div>
-
-      <!-- Test -->
-      <div id="testBox" class="card" style="margin-top:14px; padding:14px;">
-        <h2>Тест</h2>
-        <div class="muted small">Загрузка теста по ссылке: <span class="mono" id="testUrlLabel"></span></div>
-
-        <div id="testContent" style="margin-top:10px;"></div>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn" id="submitTestBtn">Проверить</button>
-          <button class="btn secondary" id="hideTestBtn">Скрыть тест</button>
-        </div>
-
-        <div id="testResult" class="msg"></div>
-      </div>
     </div>
 
-    <!-- RIGHT -->
+    <!-- RIGHT: PDF theory -->
     <div class="card" id="theoryCard">
       <h2>Теория (PDF)</h2>
 
@@ -105,47 +77,31 @@
         Если PDF не отображается, откройте его в новой вкладке:
         <a id="pdfLink" href="#" target="_blank" rel="noopener noreferrer">Открыть PDF</a>
       </div>
-      <div id="pdfHint" class="msg small"></div>
     </div>
   </div>
 </div>
 
 <script>
-  // ==========================================================
-  // ✅ МЕНЯЕТЕ ТОЛЬКО ССЫЛКИ НИЖЕ (если нужно)
-  // ==========================================================
+  // =========================
+  // ✅ МЕНЯЕТЕ ТОЛЬКО ЭТИ ССЫЛКИ
+  // =========================
   const CONFIG = {
     youtubeUrl: "https://youtu.be/w5-eS7igC7M?si=DhJZgJjCRtJKpFnc",
-
-    // ✅ GitHub Pages PDF (не raw)
     pdfUrl: "https://bsm141183-coder.github.io/Aieduportal/assets/lesson1-ai.pdf",
-
-    // JSON тест (если файла нет — будет ошибка при загрузке теста)
-    testUrl: "https://bsm141183-coder.github.io/Aieduportal/tests/lesson1.json",
-
-    passPercent: 70
+    testPage: "test_ai.html" // файл теста рядом с lesson1.html
   };
 
-  // UI refs
+  // UI
   const videoFrame    = document.getElementById("videoFrame");
   const pdfFrame      = document.getElementById("pdfFrame");
   const pdfLink       = document.getElementById("pdfLink");
-  const pdfHint       = document.getElementById("pdfHint");
   const openTheoryBtn = document.getElementById("openTheoryBtn");
   const startTestBtn  = document.getElementById("startTestBtn");
-  const statusEl      = document.getElementById("status");
 
-  const testBox       = document.getElementById("testBox");
-  const testUrlLabel  = document.getElementById("testUrlLabel");
-  const testContent   = document.getElementById("testContent");
-  const submitTestBtn = document.getElementById("submitTestBtn");
-  const hideTestBtn   = document.getElementById("hideTestBtn");
-  const testResult    = document.getElementById("testResult");
-
-  // ===== Init video =====
+  // Video
   videoFrame.src = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
 
-  // ===== Init PDF (Google Viewer for proper scaling) =====
+  // PDF через Google Viewer (чтобы не мельчило на ПК/телефоне)
   const viewer =
     "https://drive.google.com/viewerng/viewer?embedded=true&url=" +
     encodeURIComponent(CONFIG.pdfUrl);
@@ -153,124 +109,19 @@
   pdfFrame.src = viewer;
   pdfLink.href = CONFIG.pdfUrl;
 
-  pdfHint.className = "msg small";
-  pdfHint.textContent = "PDF отображается через Google Viewer (масштаб нормально работает на ПК и телефоне).";
-
-  testUrlLabel.textContent = CONFIG.testUrl;
-
-  // Scroll to theory
+  // Кнопка теории — прокрутка к PDF
   openTheoryBtn.addEventListener("click", () => {
     document.getElementById("theoryCard").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // =========================
-  // Test loader & renderer
-  // =========================
-  let testData = null;
-
-startTestBtn.addEventListener("click", () => {
-  window.location.href = "test_ai.html";
-});
-//  startTestBtn.addEventListener("click", async () => {
- //   statusEl.className = "msg";
- //   statusEl.textContent = "Загружаю тест...";
-
-    try {
-      testData = await loadTest(CONFIG.testUrl);
-      renderTest(testData);
-
-      testBox.style.display = "block";
-      testBox.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      statusEl.className = "msg ok";
-      statusEl.textContent = "Тест загружен. Ответьте на вопросы и нажмите «Проверить».";
-      testResult.textContent = "";
-    } catch (e) {
-      statusEl.className = "msg err";
-      statusEl.textContent =
-        "Не удалось загрузить тест. Проверьте ссылку на JSON и что файл существует на GitHub Pages.";
-      console.error(e);
-    }
+  // ✅ Кнопка теста — просто открывает test_ai.html (НИКАКОГО JSON/загрузки)
+  startTestBtn.addEventListener("click", () => {
+    window.location.href = CONFIG.testPage;
   });
-
-  hideTestBtn.addEventListener("click", () => {
-    testBox.style.display = "none";
-    testResult.textContent = "";
-  });
-
-  submitTestBtn.addEventListener("click", () => {
-    if (!testData) return;
-
-    const { correct, total, percent } = gradeTest(testData);
-    const passed = percent >= CONFIG.passPercent;
-
-    testResult.className = "msg " + (passed ? "ok" : "err");
-    testResult.textContent =
-      `Результат: ${correct}/${total} (${percent.toFixed(0)}%). ` +
-      (passed ? "Тест пройден ✅" : `Не пройден ❌ (нужно ≥ ${CONFIG.passPercent}%).`);
-  });
-
-  async function loadTest(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-
-    const data = await res.json();
-    if (!data || !Array.isArray(data.questions)) throw new Error("Bad test JSON structure");
-    return data;
-  }
-
-  function renderTest(data) {
-    testContent.innerHTML = "";
-
-    const title = data.title
-      ? `<div class="muted" style="margin:6px 0 12px;"><b>${escapeHtml(data.title)}</b></div>`
-      : "";
-    testContent.insertAdjacentHTML("beforeend", title);
-
-    data.questions.forEach((q, idx) => {
-      const qId = `q_${idx}`;
-      const box = document.createElement("div");
-      box.className = "q";
-
-      box.innerHTML = `
-        <div class="q-title">${idx + 1}. ${escapeHtml(q.text)}</div>
-        <div id="${qId}_opts"></div>
-      `;
-
-      const opts = box.querySelector(`#${qId}_opts`);
-      q.options.forEach((opt, j) => {
-        const label = document.createElement("label");
-        label.innerHTML = `
-          <input type="radio" name="${qId}" value="${j}" />
-          <span>${escapeHtml(opt)}</span>
-        `;
-        opts.appendChild(label);
-      });
-
-      testContent.appendChild(box);
-    });
-  }
-
-  function gradeTest(data) {
-    let correct = 0;
-    const total = data.questions.length;
-
-    data.questions.forEach((q, idx) => {
-      const qId = `q_${idx}`;
-      const chosen = document.querySelector(`input[name="${qId}"]:checked`);
-      if (!chosen) return;
-      const ans = Number(chosen.value);
-      if (ans === q.answerIndex) correct++;
-    });
-
-    const percent = total ? (correct / total) * 100 : 0;
-    return { correct, total, percent };
-  }
 
   // Helpers
   function toYouTubeEmbedUrl(url) {
     let id = "";
-
     try {
       const u = new URL(url);
       if (u.hostname.includes("youtu.be")) {
@@ -286,20 +137,8 @@ startTestBtn.addEventListener("click", () => {
       const m = String(url).match(/(youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
       id = m ? m[2] : "";
     }
-
     if (!id) return "about:blank";
-    const base = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
-    const params = new URLSearchParams({ rel: "0", modestbranding: "1" });
-    return `${base}?${params.toString()}`;
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&modestbranding=1`;
   }
 </script>
 </body>
