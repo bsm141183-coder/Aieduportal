@@ -32,12 +32,16 @@
   border:1px solid var(--b);
   border-radius:12px;
   overflow:hidden;
+  height:85vh;        /* адаптивно */
+  min-height:700px;   /* чтобы окно не было маленьким */
   background:#fff;
-
-  /* фикс: нормальная высота на всех экранах */
-  height: 760px;
-  max-height: 85vh;
-  min-height: 520px;
+}
+.pdf-wrap iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
     
     /* Test */
     #testBox{display:none;}
@@ -100,7 +104,7 @@
     <div class="card" id="theoryCard">
       <h2>Теория (PDF)</h2>
       <div class="pdf-wrap">
-        <embed id="pdfFrame" type="application/pdf" />
+       <iframe id="pdfFrame" title="Теория PDF"></iframe>
       </div>
       <div class="muted" style="margin-top:8px;">
         Если PDF не отображается, откройте его в новой вкладке:
