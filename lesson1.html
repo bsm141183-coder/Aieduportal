@@ -26,7 +26,7 @@
 
     /* PDF */
     .pdf-wrap{border:1px solid var(--b); border-radius:12px; overflow:hidden; height:520px; background:#fff;}
-    .pdf-wrap iframe{width:100%; height:100%; border:0;}
+    .pdf-wrap embed{width:100%; height:100%; border:0; display:block;}
 
     /* Test */
     #testBox{display:none;}
@@ -89,7 +89,7 @@
     <div class="card" id="theoryCard">
       <h2>Теория (PDF)</h2>
       <div class="pdf-wrap">
-        <iframe id="pdfFrame" title="Теория PDF"></iframe>
+        <embed id="pdfFrame" type="application/pdf" />
       </div>
       <div class="muted" style="margin-top:8px;">
         Если PDF не отображается, откройте его в новой вкладке:
@@ -102,20 +102,21 @@
 
 <script>
   // ==========================================================
-  // ✅ ВСТАВЬТЕ СЮДА СВОИ ССЫЛКИ (ЭТО ЕДИНСТВЕННОЕ, ЧТО МЕНЯЕТЕ)
+  // ✅ МЕНЯЕТЕ ТОЛЬКО ССЫЛКИ НИЖЕ
   // ==========================================================
   const CONFIG = {
     youtubeUrl: "https://youtu.be/w5-eS7igC7M?si=DhJZgJjCRtJKpFnc",
 
-    // ✅ ВАЖНО: тут должна быть ОДНА строка-URL, без лишних кавычек/слов
-    pdfUrl: "https://raw.githubusercontent.com/bsm141183-coder/Aieduportal/main/assets/lesson1-ai.pdf",
+    // ✅ РЕКОМЕНДУЕТСЯ GitHub Pages (чтобы PDF открывался в окне и не скачивался)
+    pdfUrl: "https://bsm141183-coder.github.io/Aieduportal/assets/lesson1-ai.pdf",
 
-    // сюда поставьте ваш реальный JSON-тест, когда будет готов
-    testUrl: "https://raw.githubusercontent.com/bsm141183-coder/Aieduportal/main/tests/lesson1.json",
+    // JSON тест (если файла нет — кнопка теста покажет ошибку)
+    testUrl: "https://bsm141183-coder.github.io/Aieduportal/tests/lesson1.json",
 
     passPercent: 70
   };
 
+  // UI refs
   const videoFrame    = document.getElementById("videoFrame");
   const pdfFrame      = document.getElementById("pdfFrame");
   const pdfLink       = document.getElementById("pdfLink");
@@ -131,31 +132,30 @@
   const hideTestBtn   = document.getElementById("hideTestBtn");
   const testResult    = document.getElementById("testResult");
 
-  // ===== Init media =====
-  const embedUrl = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
-  videoFrame.src = embedUrl;
+  // Init media
+  videoFrame.src = toYouTubeEmbedUrl(CONFIG.youtubeUrl);
 
-  pdfFrame.src = CONFIG.pdfUrl;
+  // embed uses src attribute too
+  pdfFrame.setAttribute("src", CONFIG.pdfUrl);
   pdfLink.href = CONFIG.pdfUrl;
 
-  // Подсказка, если браузер/хостинг блокирует iframe с PDF
+  // Hint
   if (!CONFIG.pdfUrl || CONFIG.pdfUrl === "about:blank") {
     pdfHint.className = "msg err small";
     pdfHint.textContent = "Ссылка на PDF не задана или неверная.";
   } else {
     pdfHint.className = "msg small";
-    pdfHint.textContent = "Если рамка пустая — нажмите «Открыть PDF» (это обходит блокировку в iframe на некоторых хостингах).";
+    pdfHint.textContent = "PDF должен отображаться в окне. Если нет — откройте по ссылке ниже.";
   }
 
   testUrlLabel.textContent = CONFIG.testUrl;
 
+  // Scroll to theory
   openTheoryBtn.addEventListener("click", () => {
     document.getElementById("theoryCard").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  // =========================
   // Test loader & renderer
-  // =========================
   let testData = null;
 
   startTestBtn.addEventListener("click", async () => {
@@ -175,7 +175,7 @@
     } catch (e) {
       statusEl.className = "msg err";
       statusEl.textContent =
-        "Не удалось загрузить тест. Проверьте ссылку на JSON (и что файл реально существует).";
+        "Не удалось загрузить тест. Проверьте ссылку на JSON и что файл существует на GitHub Pages.";
       console.error(e);
     }
   });
@@ -254,9 +254,7 @@
     return { correct, total, percent };
   }
 
-  // =========================
   // Helpers
-  // =========================
   function toYouTubeEmbedUrl(url) {
     let id = "";
 
@@ -277,7 +275,6 @@
     }
 
     if (!id) return "about:blank";
-
     const base = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
     const params = new URLSearchParams({ rel: "0", modestbranding: "1" });
     return `${base}?${params.toString()}`;
