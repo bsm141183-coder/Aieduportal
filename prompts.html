@@ -67,9 +67,11 @@
     }
     .viewerHeader .h{font-weight:800;}
     .viewerHeader a{font-size:12px;color:var(--accent);text-decoration:none}
+
+    /* 100dvh лучше для телефонов */
     .frameWrap{
       background:var(--card); border:1px solid var(--b); border-radius:14px; overflow:hidden;
-      height: calc(100vh - 90px);
+      height: calc(100dvh - 90px);
     }
     iframe{width:100%;height:100%;border:0;}
 
@@ -82,7 +84,6 @@
     .modalHead{padding:12px 14px; border-bottom:1px solid var(--b); display:flex; align-items:center; justify-content:space-between; gap:10px;}
     .modalHead .mh{font-weight:900;}
     .modalBody{padding:14px;}
-    .row{display:flex; gap:10px; flex-wrap:wrap;}
     .field{display:flex; flex-direction:column; gap:6px; width:100%;}
     label{font-size:12px; color:var(--mut); font-weight:700;}
     input{
@@ -107,8 +108,8 @@
       </div>
 
       <div class="muted">
-        Слева список промтов. Серые — закрыты (нужен доступ).<br>
-        Можно добавить в корзину и активировать после оплаты кодом.
+        Серые промты закрыты (нужен код).<br>
+        Для отображения PDF на телефоне и ПК используется универсальный просмотрщик.
       </div>
 
       <div class="toolbar">
@@ -145,8 +146,7 @@
   </div>
 
 <script>
-  // ====== НАСТРОЙКИ ======
-  // 1) Добавляй новые промты сюда (p3..p5 - закрытые)
+  // ====== ПРОМТЫ (ДОБАВЛЯЙ СЮДА) ======
   const prompts = [
     {
       id: "p1",
@@ -165,7 +165,7 @@
       locked: false
     },
 
-    // ====== ТРИ НОВЫХ ПРОМТА (ЗАКРЫТЫЕ) ======
+    // ====== 3 ПЛАТНЫХ (ПОМЕНЯЙ ID В ССЫЛКЕ НА СВОИ) ======
     {
       id: "p3",
       name: "Промт №3 — (платный) Конструктор уроков",
@@ -192,50 +192,40 @@
     }
   ];
 
-  // 2) Коды доступа (демо).
-  // В реальности эти коды должен выдавать сервер/оплата.
+  // ====== КОДЫ (ДЕМО) ======
+  // В реальности: коды выдаёт сервер/оплата.
   const ACCESS_CODES = {
-    // код -> список промтов которые открывает
     "AI-PAID-3": ["p3"],
     "AI-PAID-4": ["p4"],
     "AI-PAID-5": ["p5"],
-    // универсальный код (пример): открывает все платные
     "AI-PAID-ALL": ["p3","p4","p5"]
   };
 
-  const STORAGE_KEY_UNLOCKED = "prompt_unlocked_ids_v1";
-  const STORAGE_KEY_CART = "prompt_cart_ids_v1";
+  const STORAGE_KEY_UNLOCKED = "prompt_unlocked_ids_v2";
+  const STORAGE_KEY_CART = "prompt_cart_ids_v2";
 
-  // ====== УТИЛИТЫ ======
-  function toDrivePreviewUrl(shareUrl) {
+  // ====== УНИВЕРСАЛЬНЫЙ ПРОСМОТР PDF ======
+  // Всегда используем Google Docs Viewer + прямая ссылка на PDF из Drive.
+  // Это наиболее стабильный вариант для телефонов и ПК.
+  function toUniversalViewerUrl(shareUrl) {
     const m = shareUrl.match(/\/file\/d\/([^/]+)\//);
-    if (!m) return shareUrl;
+    if (!m) return shareUrl; // если ссылка не drive/file/d/.../
+
     const fileId = m[1];
-    return `https://drive.google.com/file/d/${fileId}/preview`;
+    const directPdf = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(directPdf)}`;
   }
 
-  function loadUnlockedSet() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY_UNLOCKED) || "[]");
-      return new Set(arr);
-    } catch { return new Set(); }
+  function loadSet(key) {
+    try { return new Set(JSON.parse(localStorage.getItem(key) || "[]")); }
+    catch { return new Set(); }
   }
-  function saveUnlockedSet(set) {
-    localStorage.setItem(STORAGE_KEY_UNLOCKED, JSON.stringify([...set]));
+  function saveSet(key, set) {
+    localStorage.setItem(key, JSON.stringify([...set]));
   }
 
-  function loadCartSet() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY_CART) || "[]");
-      return new Set(arr);
-    } catch { return new Set(); }
-  }
-  function saveCartSet(set) {
-    localStorage.setItem(STORAGE_KEY_CART, JSON.stringify([...set]));
-  }
-
-  let unlocked = loadUnlockedSet();
-  let cart = loadCartSet();
+  let unlocked = loadSet(STORAGE_KEY_UNLOCKED);
+  let cart = loadSet(STORAGE_KEY_CART);
 
   // ====== DOM ======
   const listEl = document.getElementById("promptList");
@@ -248,7 +238,6 @@
   const modalTitle = document.getElementById("modalTitle");
   const modalBody = document.getElementById("modalBody");
   const modalFoot = document.getElementById("modalFoot");
-  const closeModalBtn = document.getElementById("closeModalBtn");
 
   document.getElementById("openCartBtn").addEventListener("click", openCartModal);
   document.getElementById("resetBtn").addEventListener("click", () => {
@@ -263,14 +252,16 @@
     openLink.style.display = "none";
   });
 
-  closeModalBtn.addEventListener("click", closeModal);
+  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
   backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
 
   function isPromptUnlocked(p) {
     return !p.locked || unlocked.has(p.id);
   }
 
-  // ====== РЕНДЕР СПИСКА ======
+  // ====== СПИСОК ======
+  let currentActiveId = null;
+
   function renderList() {
     listEl.innerHTML = "";
     prompts.forEach((p) => {
@@ -305,44 +296,38 @@
         ${actions}
       `;
 
-      // клик по карточке — открывает только если доступ есть
+      // клик по карточке
       div.addEventListener("click", () => {
-        if (!isPromptUnlocked(p)) {
-          openCodeModal(p.id);
-          return;
-        }
+        if (!isPromptUnlocked(p)) { openCodeModal(p.id); return; }
         selectPrompt(p.id);
       });
 
-      // кнопки внутри карточки
+      // кнопка "в корзину"
       div.querySelectorAll("[data-add]").forEach(btn => {
         btn.addEventListener("click", (ev) => {
           ev.stopPropagation();
           const id = btn.getAttribute("data-add");
           if (cart.has(id)) return;
           cart.add(id);
-          saveCartSet(cart);
+          saveSet(STORAGE_KEY_CART, cart);
           renderList();
           updateCartCount();
         });
       });
 
+      // кнопка "ввести код"
       div.querySelectorAll("[data-code]").forEach(btn => {
         btn.addEventListener("click", (ev) => {
           ev.stopPropagation();
-          const id = btn.getAttribute("data-code");
-          openCodeModal(id);
+          openCodeModal(btn.getAttribute("data-code"));
         });
       });
 
       listEl.appendChild(div);
     });
 
-    // подсветка активного
     setActive(currentActiveId);
   }
-
-  let currentActiveId = null;
 
   function setActive(id) {
     [...document.querySelectorAll(".item")].forEach((el, i) => {
@@ -355,21 +340,22 @@
     const p = prompts.find(x => x.id === id);
     if (!p) return;
 
-    if (!isPromptUnlocked(p)) {
-      openCodeModal(id);
-      return;
-    }
+    if (!isPromptUnlocked(p)) { openCodeModal(id); return; }
 
     currentActiveId = id;
     setActive(id);
-    viewerTitle.textContent = p.name;
-    frame.src = toDrivePreviewUrl(p.shareUrl);
 
+    viewerTitle.textContent = p.name;
+
+    // универсальная ссылка в iframe (ПК+телефон)
+    frame.src = toUniversalViewerUrl(p.shareUrl);
+
+    // открыть "в новой вкладке" — лучше давать оригинальный shareUrl
     openLink.style.display = "inline";
     openLink.href = p.shareUrl;
   }
 
-  // ====== КОРЗИНА / МОДАЛКИ ======
+  // ====== МОДАЛКИ ======
   function openModal(title, bodyHtml, footHtml) {
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
@@ -397,22 +383,24 @@
           ${items.map(p => `<li><b>${p.name}</b> — ${p.price || 0} ₸</li>`).join("")}
         </ul>
         <p class="help" style="margin-top:10px;"><b>Итого:</b> ${total} ₸</p>
-        <p class="help">
-          Это демо-логика. В реальном варианте тут будет кнопка оплаты (Kaspi/Stripe) и выдача кода.
-        </p>
+
         <div class="field" style="margin-top:10px;">
           <label>Код доступа</label>
           <input id="codeInput" placeholder="Например: AI-PAID-ALL" />
           <div class="dangerText" id="codeErr">Неверный код.</div>
           <div class="okText" id="codeOk">Готово! Промты разблокированы.</div>
         </div>
+
+        <p class="help" style="margin-top:10px;">
+          Важно: просмотр работает на всех устройствах при условии, что в Google Drive включён доступ “Anyone with link”.
+        </p>
       `
       : `<div class="help">Корзина пустая.</div>`;
 
     const foot = items.length
       ? `
         <button class="btn" id="clearCartBtn">Очистить корзину</button>
-        <button class="btn btnPrimary" id="applyCodeBtn">Я оплатил(а) — применить код</button>
+        <button class="btn btnPrimary" id="applyCodeBtn">Применить код</button>
       `
       : `<button class="btn btnPrimary" id="closeBtn">Закрыть</button>`;
 
@@ -425,7 +413,7 @@
 
     document.getElementById("clearCartBtn").addEventListener("click", () => {
       cart.clear();
-      saveCartSet(cart);
+      saveSet(STORAGE_KEY_CART, cart);
       updateCartCount();
       renderList();
       openCartModal();
@@ -441,18 +429,14 @@
       ok.style.display = "none";
 
       const unlockIds = ACCESS_CODES[code];
-      if (!unlockIds) {
-        err.style.display = "block";
-        return;
-      }
+      if (!unlockIds) { err.style.display = "block"; return; }
 
-      // открываем только то, что в корзине (или все, если ALL)
       unlockIds.forEach(id => unlocked.add(id));
-      saveUnlockedSet(unlocked);
+      saveSet(STORAGE_KEY_UNLOCKED, unlocked);
 
-      // можно очистить корзину после успешной оплаты
+      // очистить из корзины то, что открыли
       unlockIds.forEach(id => cart.delete(id));
-      saveCartSet(cart);
+      saveSet(STORAGE_KEY_CART, cart);
 
       ok.style.display = "block";
       updateCartCount();
@@ -472,7 +456,7 @@
         <label>Код доступа</label>
         <input id="singleCodeInput" placeholder="Например: AI-PAID-3 или AI-PAID-ALL" />
         <div class="dangerText" id="singleErr">Неверный код.</div>
-        <div class="okText" id="singleOk">Доступ открыт. Можно просматривать PDF.</div>
+        <div class="okText" id="singleOk">Доступ открыт.</div>
       </div>
     `;
 
@@ -493,27 +477,18 @@
       ok.style.display = "none";
 
       const unlockIds = ACCESS_CODES[code];
-      if (!unlockIds) {
-        err.style.display = "block";
-        return;
-      }
+      if (!unlockIds) { err.style.display = "block"; return; }
 
-      // если код открывает конкретный промт или ALL
-      if (!unlockIds.includes(promptId) && !unlockIds.includes("p3") && code !== "AI-PAID-ALL") {
-        // мягкая проверка: если код не открывает этот промт — ошибка
-        // (для ALL уже покрыто)
-        err.style.display = "block";
-        return;
-      }
-
+      // Открываем всё, что даёт код (или ALL)
       unlockIds.forEach(id => unlocked.add(id));
-      saveUnlockedSet(unlocked);
+      saveSet(STORAGE_KEY_UNLOCKED, unlocked);
 
       ok.style.display = "block";
       renderList();
-      // автоматически откроем промт
+
+      // автоматически открыть выбранный промт
       selectPrompt(promptId);
-      setTimeout(closeModal, 600);
+      setTimeout(closeModal, 500);
     });
   }
 
@@ -522,7 +497,7 @@
     updateCartCount();
     renderList();
 
-    // открыть первый доступный (если хочешь иначе — убери блок)
+    // открыть первый доступный промт
     const firstAvailable = prompts.find(p => isPromptUnlocked(p));
     if (firstAvailable) selectPrompt(firstAvailable.id);
   }
