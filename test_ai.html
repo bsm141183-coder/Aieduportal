@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тест: Искусственный интеллект в обучении</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --accent:#2563eb;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --muted:#6b7280;
+}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:#0f172a;
+}
+.container{
+  max-width:900px;
+  margin:40px auto;
+  padding:20px;
+}
+h1{
+  text-align:center;
+  margin-bottom:10px;
+}
+.subtitle{
+  text-align:center;
+  color:var(--muted);
+  margin-bottom:30px;
+}
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+.question{
+  font-weight:600;
+  margin-bottom:15px;
+}
+.answers button{
+  width:100%;
+  text-align:left;
+  padding:12px 14px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  cursor:pointer;
+  transition:.2s;
+}
+.answers button:hover{
+  background:#f1f5ff;
+}
+.answers button.correct{
+  background:#dcfce7;
+  border-color:var(--ok);
+  color:#065f46;
+}
+.answers button.wrong{
+  background:#fee2e2;
+  border-color:var(--bad);
+  color:#7f1d1d;
+}
+.explain{
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  background:#f8fafc;
+  border-left:4px solid var(--accent);
+  font-size:14px;
+}
+.status{
+  font-weight:700;
+  margin-top:10px;
+}
+.status.ok{color:var(--ok);}
+.status.bad{color:var(--bad);}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>Тест по теме «Искусственный интеллект в обучении»</h1>
+<div class="subtitle">10 вопросов • 4 варианта ответа</div>
+
+<div id="test"></div>
+</div>
+
+<script>
+const testData = [
+{
+q:"Как в лекции определяется современный ИИ?",
+a:[
+"Простая программа для поиска информации",
+"Комплексная мультимодальная система, обрабатывающая текст, код, изображения, аудио и видео",
+"Исключительно чат-бот для общения",
+"Автономный робот"
+],
+correct:1,
+exp:"Современный ИИ описан как мультимодальная система с возможностью рассуждения и планирования."
+},
+{
+q:"На каких архитектурах строятся ИИ-системы 2026 года?",
+a:[
+"Классические экспертные системы",
+"Нейронные сети первого поколения",
+"Трансформеры нового поколения с расширенным контекстом",
+"Алгоритмы без машинного обучения"
+],
+correct:2,
+exp:"В лекции прямо указано использование трансформеров с большим контекстным окном."
+},
+{
+q:"Какую роль может выполнять ИИ в обучении?",
+a:[
+"Экзаменатор",
+"Сократовский учитель",
+"Контролёр дисциплины",
+"Администратор учебного процесса"
+],
+correct:1,
+exp:"ИИ может вести студента к ответу через наводящие вопросы, а не давать готовое решение."
+},
+{
+q:"Что относится к направлению Adaptive Learning?",
+a:[
+"Автоматическая проверка плагиата",
+"Адаптация объяснений под уровень знаний студента",
+"Генерация экзаменационных билетов",
+"Создание презентаций"
+],
+correct:1,
+exp:"Adaptive Learning — это персонализация объяснений под конкретного обучающегося."
+},
+{
+q:"Что делает мультимодальный конспект?",
+a:[
+"Заменяет учебники",
+"Создаёт базу знаний из заметок и записей лекций",
+"Проверяет знания студентов",
+"Ограничивает доступ к материалам"
+],
+correct:1,
+exp:"ИИ преобразует заметки и записи в структурированную базу знаний."
+},
+{
+q:"Пример использования ИИ в творческом партнёрстве:",
+a:[
+"Подсчёт оценок",
+"Диалог с виртуальной личностью эпохи Возрождения",
+"Заполнение журнала",
+"Регистрация студентов"
+],
+correct:1,
+exp:"В лекции приведён пример исторического диалога как симуляции."
+},
+{
+q:"Какова цель Prompt Engineering?",
+a:[
+"Сократить время обучения",
+"Создать структурированный запрос для качественного результата",
+"Скрыть использование ИИ",
+"Увеличить объём ответа"
+],
+correct:1,
+exp:"Структурированный промпт повышает точность и качество ответа ИИ."
+},
+{
+q:"Какой элемент НЕ входит в эффективный промпт?",
+a:[
+"Роль",
+"Контекст",
+"Ограничения",
+"Случайные данные"
+],
+correct:3,
+exp:"Промпт должен быть осмысленным и структурированным."
+},
+{
+q:"Что означает принцип верификации?",
+a:[
+"Запрет использования ИИ",
+"Проверка фактов вручную",
+"Автоматическое доверие ответам ИИ",
+"Удаление ошибок системой"
+],
+correct:1,
+exp:"ИИ может галлюцинировать, поэтому факты нужно проверять."
+},
+{
+q:"Главный тезис лекции:",
+a:[
+"ИИ заменит человека",
+"ИИ не нужен в образовании",
+"Человек с ИИ заменит того, кто его не использует",
+"ИИ опасен для общества"
+],
+correct:2,
+exp:"В заключении подчёркнута роль ИИ как усилителя человеческого интеллекта."
+}
+];
+
+const root = document.getElementById("test");
+
+testData.forEach((item,i)=>{
+  const card=document.createElement("div");
+  card.className="card";
+
+  card.innerHTML=`
+    <div class="question">${i+1}. ${item.q}</div>
+    <div class="answers"></div>
+    <div class="result"></div>
+  `;
+
+  const answers=card.querySelector(".answers");
+  const result=card.querySelector(".result");
+
+  item.a.forEach((text,idx)=>{
+    const btn=document.createElement("button");
+    btn.textContent=text;
+    btn.onclick=()=>{
+      if(result.innerHTML!=="")return;
+
+      if(idx===item.correct){
+        btn.classList.add("correct");
+        result.innerHTML=`<div class="status ok">✔ Верно</div>`;
+      }else{
+        btn.classList.add("wrong");
+        answers.children[item.correct].classList.add("correct");
+        result.innerHTML=`
+          <div class="status bad">✖ Неверно</div>
+          <div class="explain">
+            <b>Правильный ответ:</b> ${item.a[item.correct]}<br><br>
+            <b>Пояснение:</b> ${item.exp}
+          </div>`;
+      }
+    };
+    answers.appendChild(btn);
+  });
+
+  root.appendChild(card);
+});
+</script>
+</body>
+</html>
