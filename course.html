@@ -198,6 +198,11 @@
       }
 
       function render() {
+        // ✅ Подписка: если код активирован на портале — открываем уроки с 4-го
+        if (localStorage.getItem("ai_subscription_code_ok") === "1") {
+          unlockedFromOrder = Math.max(Number(unlockedFromOrder || 0), 4);
+        }
+
         lessonsEl.innerHTML = "";
 
         for (const lesson of lessons) {
