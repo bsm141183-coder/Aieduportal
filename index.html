@@ -2183,6 +2183,44 @@ card.innerHTML = `
 })();
 </script>
 
+<!-- ===== МОДАЛЬНОЕ ОКНО ПОДПИСКИ ===== -->
+<div id="subModal" style="display:none; position:fixed; inset:0; 
+background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:999;">
+  <div style="background:#fff; padding:20px; border-radius:14px; width:360px;">
+    <h3>Подписка — код доступа</h3>
+    <p style="font-size:13px;color:#666;">
+      Введите код. После активации откроются все промты и урок №4.
+    </p>
+    <input id="subCodeInput" placeholder="Введите код"
+           style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+    <button onclick="activateSub()"
+            style="background:#2563eb; color:white; padding:10px 14px; border:none; border-radius:8px;">
+      Активировать
+    </button>
+    <p id="subError" style="color:red; font-size:13px;"></p>
+  </div>
+</div>
+
+<script>
+document.getElementById("subscriptionBtn").onclick = function(){
+  document.getElementById("subModal").style.display = "flex";
+}
+
+function activateSub(){
+  const code = document.getElementById("subCodeInput").value.trim();
+  
+  if(code === "AI2026"){
+      localStorage.setItem("ai_subscription_active", "1");
+      alert("Подписка активирована");
+      location.reload();
+  } else {
+      document.getElementById("subError").innerText = "Код неверный";
+  }
+}
+</script>
+
+    
 </body>
 
 </html>
+
