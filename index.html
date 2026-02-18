@@ -612,7 +612,62 @@
 }
     
 
-    </style>
+    
+        /* ==== ПОДПИСКА: модальное окно кода ==== */
+        .sub-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 60;
+            padding: 16px;
+        }
+        .sub-modal.open { display: flex; }
+        .sub-modal-card {
+            width: min(520px, 100%);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(16,24,40,.22);
+            overflow: hidden;
+        }
+        .sub-modal-head {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .sub-modal-title { font-weight: 700; font-size: 14px; }
+        .sub-modal-body { padding: 14px; }
+        .sub-modal-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .sub-input {
+            flex: 1 1 240px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+        }
+        .sub-msg { margin-top: 10px; font-size: 12px; color: var(--muted); }
+        .sub-msg.ok { color: #027a48; font-weight: 600; }
+        .sub-msg.err { color: #b42318; font-weight: 600; }
+        .sub-close {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 6px 9px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+</style>
 <link rel="manifest" href="/Aieduportal/manifest.webmanifest">
 <meta name="theme-color" content="#2563eb">
 
@@ -627,7 +682,7 @@
         <div class="nav">
             <div class="nav-left">
                 <div class="logo-circle">
-    <img src="assets/logo.png" alt="DOAIT" style="width: 100%; height: 100%; border-radius: 8px;">
+    <img src="assets/logo.png" alt="AI EDU PORTAL" style="width: 100%; height: 100%; border-radius: 8px;">
 </div>
                 <div>
                     <div class="nav-title" data-i18n="navTitle">AI EDU PORTAL</div>
@@ -636,6 +691,7 @@
             </div>
             <nav class="nav-links">
                 <button class="nav-link" data-scroll="#section-tools" data-i18n="navCatalog">Каталог</button>
+                <button class="nav-link" id="subscribeBtn" data-i18n="navSubscribe">Подписка</button>
                 <button class="nav-link" data-scroll="#section-navigator" data-i18n="navNavigator">AI-Навигатор</button>
                 <button class="nav-link" data-scroll="#section-materials" data-i18n="navMaterials">Материалы</button>
                 <button class="nav-link" data-scroll="#section-courses" data-i18n="navCourses">Мини-курсы</button>
@@ -989,7 +1045,7 @@
     </main>
 
     <footer data-i18n="footerText">
-        DOAIT · Рабочая версия портала ИИ для колледжей · Можно развивать и наполнять материалами под ваш колледж
+        AI EDU PORTAL · Рабочая версия портала ИИ для колледжей · Можно развивать и наполнять материалами под ваш колледж
     </footer>
 </div>
 
@@ -2043,41 +2099,90 @@ card.innerHTML = `
   }
 </script>
 
+
+<!-- ==== ПОДПИСКА: модальное окно ввода кода ==== -->
+<div class="sub-modal" id="subModal" aria-hidden="true">
+  <div class="sub-modal-card" role="dialog" aria-modal="true" aria-labelledby="subTitle">
+    <div class="sub-modal-head">
+      <div class="sub-modal-title" id="subTitle">Подписка — код доступа</div>
+      <button class="sub-close" id="subCloseBtn">✕</button>
+    </div>
+    <div class="sub-modal-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+        Введите код. После активации откроются все промты и урок №4 в курсе.
+      </div>
+      <div class="sub-modal-row">
+        <input class="sub-input" id="subCodeInput" placeholder="Например: AI-PAID-ALL" autocomplete="off" />
+        <button class="btn btn-primary" id="subActivateBtn">Активировать</button>
+      </div>
+      <div class="sub-msg" id="subMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = "ai_subscription_code_ok";
+  const VALID_CODES = ["AI-PAID-ALL", "AI-SUB-ALL"]; // можно заменить на ваш реальный код
+
+  const btn = document.getElementById("subscribeBtn");
+  const modal = document.getElementById("subModal");
+  const closeBtn = document.getElementById("subCloseBtn");
+  const input = document.getElementById("subCodeInput");
+  const activateBtn = document.getElementById("subActivateBtn");
+  const msg = document.getElementById("subMsg");
+
+  function openModal(){
+    msg.textContent = "";
+    msg.className = "sub-msg";
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    setTimeout(()=>input.focus(), 0);
+  }
+  function closeModal(){
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+  function setMsg(text, ok){
+    msg.textContent = text;
+    msg.className = "sub-msg " + (ok ? "ok" : "err");
+  }
+
+  // показать статус, если уже активировано
+  if (localStorage.getItem(STORAGE_KEY) === "1") {
+    // можно дополнительно подсветить кнопку
+  }
+
+  btn && btn.addEventListener("click", openModal);
+  closeBtn && closeBtn.addEventListener("click", closeModal);
+  modal && modal.addEventListener("click", (e)=>{ if(e.target === modal) closeModal(); });
+
+  activateBtn && activateBtn.addEventListener("click", ()=>{
+    const code = String(input.value||"").trim();
+    if(!code){ setMsg("Введите код.", false); return; }
+
+    if (VALID_CODES.includes(code)) {
+      localStorage.setItem(STORAGE_KEY, "1");
+      localStorage.setItem("ai_subscription_code_value", code); // на будущее (не обязательно)
+      setMsg("Код принят. Доступ открыт.", true);
+      // обновим страницу, чтобы сразу применилось на текущей вкладке
+      setTimeout(()=>location.reload(), 400);
+    } else {
+      setMsg("Код неверный.", false);
+    }
+  });
+
+  // Enter
+  input && input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") activateBtn.click();
+    if(e.key === "Escape") closeModal();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && modal.classList.contains("open")) closeModal();
+  });
+})();
+</script>
+
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
